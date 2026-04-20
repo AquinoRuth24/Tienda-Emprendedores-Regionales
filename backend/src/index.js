@@ -17,7 +17,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 //Rutas
 app.use('/api/cliente', clienteRoutes);//se define la ruta para el manejo de autentificacion de clientes.
 app.use('/api/productos', productoRoutes);
-
+app.use('/api/carrito', require('./routes/carritoRoutes'));
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' });
 });

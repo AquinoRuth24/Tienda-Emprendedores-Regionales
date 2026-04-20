@@ -87,7 +87,32 @@ function Inicio() {
     localStorage.removeItem("cliente");
     navigate("/login");
   };
+const agregarAlCarrito = async (producto) => {
+  const id_cliente = cliente?.id || 1;
 
+  const data = {
+    id_cliente: id_cliente,
+    id_producto: producto.id_producto,
+    cantidad: 1, // Suma de a 1 por clic
+    precio: producto.precio
+  };
+
+  try {
+    const res = await fetch('http://localhost:3001/api/carrito/agregar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert(`¡${producto.nombre} agregado al carrito con éxito!`);
+    } else {
+      alert("Hubo un error al agregar el producto.");
+    }
+  } catch (error) {
+    console.error("Error de conexión:", error);
+  }
+};
   return (
     <div style={estilos.pagina}>
       {/* NAVBAR */}
@@ -197,7 +222,10 @@ function Inicio() {
                   <p style={estilos.categoria}> {producto.categoria}</p>
                   <p style={estilos.precio}>${producto.precio}</p>
                   <p style={estilos.stock}>Stock: {producto.stock}</p>
-                  <button style={estilos.btnAgregar}>Agregar al carrito</button>
+                  <button style={estilos.btnAgregar} 
+                      onClick={() => agregarAlCarrito(producto)}>
+                      Agregar al carrito
+                  </button>
                 </div>
                 ); // ← cerrás el return
     })
