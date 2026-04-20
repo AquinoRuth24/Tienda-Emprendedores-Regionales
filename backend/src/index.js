@@ -3,14 +3,20 @@ const cors = require('cors');
 require('dotenv').config();
 require('./config/db');
 
-const clienteRoutes = require('./routes/clienteRoutes');//importar las rutas
+//importar las rutas
+
+const clienteRoutes = require('./routes/clienteRoutes');
+const productoRoutes = require('./routes/productoRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 //Rutas
-app.use('/api/cliente', clienteRoutes);//se define la ruta para el manejo de autentificacion de clientea.
+app.use('/api/cliente', clienteRoutes);//se define la ruta para el manejo de autentificacion de clientes.
+app.use('/api/productos', productoRoutes);
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' });
