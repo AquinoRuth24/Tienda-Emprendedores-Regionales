@@ -176,13 +176,18 @@ function Inicio() {
             {productos.length === 0 ? (
               <p>No hay productos disponibles.</p>
             ) : (
-              productos.map((producto) => (
-                <div key={producto.id_producto} style={estilos.tarjeta}>
+              productos.map((producto) => {
+  console.log('Producto:', producto.nombre, '| imagen:', producto.imagen);
+  return (
+    <div key={producto.id_producto} style={estilos.tarjeta}>
                   {producto.imagen ? (
                     <img
                       src={`http://localhost:3001/uploads/${producto.imagen}`}
                       alt={producto.nombre}
                       style={estilos.imagen}
+                      onError={(e) =>
+                        console.log("Error cargando imagen:", e.target.src)
+                      }
                     />
                   ) : (
                     <div style={estilos.imagenPlaceholder}>🛍️</div>
@@ -194,7 +199,8 @@ function Inicio() {
                   <p style={estilos.stock}>Stock: {producto.stock}</p>
                   <button style={estilos.btnAgregar}>Agregar al carrito</button>
                 </div>
-              ))
+                ); // ← cerrás el return
+    })
             )}
           </div>
         </div>
@@ -325,12 +331,12 @@ const estilos = {
     backgroundColor: "#eaf4fb",
     borderRadius: "8px",
   },
-imagen: {
-  width: '100%',
-  height: '150px',
-  objectFit: 'cover',
-  borderRadius: '8px',
-},
+  imagen: {
+    width: "100%",
+    height: "150px",
+    objectFit: "cover",
+    borderRadius: "8px",
+  },
   nombreProducto: {
     color: "#333",
     fontSize: "15px",

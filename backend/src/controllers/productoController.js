@@ -6,7 +6,7 @@ const getProductos = async (req, res) => {
     const pool = await poolPromise;
     const resultado = await pool.request().query(`
         SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-            c.descripcion AS categoria, p.id_categoria, p.id_usuario
+            c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
         FROM Producto p
         INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
     `);
@@ -25,7 +25,7 @@ const getProductosPorCategoria = async (req, res) => {
       .request()
       .input("id_categoria", sql.Int, id_categoria).query(`
         SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-            c.descripcion AS categoria, p.id_categoria, p.id_usuario
+            c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
         FROM Producto p
         INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
         WHERE p.id_categoria = @id_categoria
@@ -56,7 +56,7 @@ const getProductosPorEmprendedor = async (req, res) => {
       .request()
       .input("id_usuario", sql.Int, id_usuario).query(`
         SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-            c.descripcion AS categoria, p.id_categoria, p.id_usuario
+          c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
         FROM Producto p
         INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
         WHERE p.id_usuario = @id_usuario
@@ -72,7 +72,7 @@ const getEmprendedores = async (req, res) => {
     const pool = await poolPromise;
     const resultado = await pool.request().query(`
         SELECT DISTINCT u.id_usuario, u.apellidoNombre,
-               STRING_AGG(c.descripcion, ', ') AS categorias
+              STRING_AGG(c.descripcion, ', ') AS categorias
         FROM Usuario u
         INNER JOIN Producto p ON u.id_usuario = p.id_usuario
         INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
@@ -84,9 +84,9 @@ const getEmprendedores = async (req, res) => {
   }
 };
 module.exports = {
-getProductos,
-getProductosPorCategoria,
-getCategorias,
-getProductosPorEmprendedor,
-getEmprendedores,
+  getProductos,
+  getProductosPorCategoria,
+  getCategorias,
+  getProductosPorEmprendedor,
+  getEmprendedores,
 };
