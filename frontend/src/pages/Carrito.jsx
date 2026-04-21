@@ -24,7 +24,7 @@ function Carrito() {
   
 useEffect(() => {
     cargarCarrito();
-  }, []);
+  }, );
 
   const eliminarItem = async (id_item_carrito) => {
     try {
