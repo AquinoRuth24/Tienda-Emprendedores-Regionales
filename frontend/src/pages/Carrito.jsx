@@ -40,6 +40,57 @@ useEffect(() => {
       console.error("Error al eliminar:", error);
     }
   };
+  const cambiarCantidad = async (item, nuevaCantidad) => {
+    // 1. Validamos que no supere el stock
+    if (nuevaCantidad > item.stock) {
+      alert(`¡Ups! Solo hay ${item.stock} unidades disponibles de ${item.nombre}.`);
+      return;
+    }
+
+    // 2. Si baja a 0, reutilizamos tu función de eliminar
+    if (nuevaCantidad === 0) {
+      eliminarItem(item.id_item_carrito);
+      return;
+    }
+
+    // 3. Si todo está bien, mandamos la actualización al backend
+    try {
+      const res = await fetch('http://localhost:3001/api/carrito/actualizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id_item_carrito: item.id_item_carrito, 
+          nueva_cantidad: nuevaCantidad, 
+          id_carrito: idCarrito 
+        })
+      });
+      if (res.ok) {
+        cargarCarrito(); // Recargamos para que se actualice la pantalla
+      }
+    } catch (error) {
+      console.error("Error al actualizar cantidad:", error);
+    }
+  };
+  const finalizarCompra = async () => {
+  try {
+    const res = await fetch('http://localhost:3001/api/carrito/finalizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        id_carrito: idCarrito, 
+        id_cliente: id_cliente,
+        total: subtotal 
+      })
+    });
+
+    if (res.ok) {
+      alert("¡Gracias por tu compra! El stock ha sido actualizado.");
+      navigate("/inicio"); // Volvemos al inicio para ver el nuevo stock
+    }
+  } catch (error) {
+    console.error("Error al finalizar:", error);
+  }
+};
 
   return (
     <div style={estilos.pagina}>
@@ -61,8 +112,25 @@ useEffect(() => {
                 <div key={item.id_item_carrito} style={estilos.item}>
                   <div style={estilos.infoItem}>
                     <h3>{item.nombre}</h3>
-                    <p>Cantidad: {item.cantidad}</p>
-                    <p>Precio Unitario: ${item.precio}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "5px" }}>
+                        <p style={{ margin: 0 }}>Cantidad:</p>
+                        <button 
+                          style={estilos.btnCant} 
+                          onClick={() => cambiarCantidad(item, item.cantidad - 1)}
+                        >
+                          -
+                        </button>
+                        <span style={{ fontWeight: "bold" }}>{item.cantidad}</span>
+                        <button 
+                          style={estilos.btnCant} 
+                          onClick={() => cambiarCantidad(item, item.cantidad + 1)}
+                        >
+                          +
+                        </button>
+                        <span style={{ fontSize: "12px", color: "#888", marginLeft: "10px" }}>
+                          (Stock: {item.stock})
+                        </span>
+                      </div>
                   </div>
                   <div style={estilos.accionesItem}>
                     <h4>${item.cantidad * item.precio}</h4>
@@ -78,8 +146,8 @@ useEffect(() => {
               <h3>Resumen de Compra</h3>
               <hr />
               <h2>Total: ${subtotal}</h2>
-              <button style={estilos.btnFinalizar} onClick={() => alert("¡Próximamente: Finalizar Compra!")}>
-                Finalizar Compra
+              <button style={estilos.btnFinalizar} onClick={finalizarCompra}>
+                 Finalizar Compra
               </button>
             </div>
           </div>
@@ -103,7 +171,7 @@ const estilos = {
   accionesItem: { textAlign: "right", display: "flex", flexDirection: "column", gap: "10px" },
   btnEliminar: { backgroundColor: "#ff4d4d", color: "white", border: "none", padding: "8px 12px", borderRadius: "5px", cursor: "pointer" },
   resumen: { flex: 1, backgroundColor: "white", padding: "20px", borderRadius: "10px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  btnFinalizar: { backgroundColor: "#4ab8d8", color: "white", border: "none", padding: "15px", borderRadius: "8px", width: "100%", fontSize: "16px", cursor: "pointer", marginTop: "15px", fontWeight: "bold" }
+  btnFinalizar: { backgroundColor: "#4ab8d8", color: "white", border: "none", padding: "15px", borderRadius: "8px", width: "100%", fontSize: "16px", cursor: "pointer", marginTop: "15px", fontWeight: "bold" },
+  btnCant: {backgroundColor: "#eaf4fb",color: "#4ab8d8",border: "1px solid #4ab8d8",borderRadius: "50%",width: "25px",height: "25px",display: "flex",justifyContent: "center",alignItems: "center",cursor: "pointer",fontWeight: "bold"}
 };
-
 export default Carrito;

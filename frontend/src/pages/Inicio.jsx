@@ -88,6 +88,10 @@ function Inicio() {
     navigate("/login");
   };
 const agregarAlCarrito = async (producto) => {
+  if (producto.stock <= 0) {
+    alert(`¡Lo sentimos! ${producto.nombre} está agotado por el momento.`);
+    return; // Corta la ejecución acá y no llama al backend
+  }
   const id_cliente = cliente?.id || 1;
 
   const data = {
@@ -222,10 +226,21 @@ const agregarAlCarrito = async (producto) => {
                   <p style={estilos.categoria}> {producto.categoria}</p>
                   <p style={estilos.precio}>${producto.precio}</p>
                   <p style={estilos.stock}>Stock: {producto.stock}</p>
-                  <button style={estilos.btnAgregar} 
-                      onClick={() => agregarAlCarrito(producto)}>
+                  {producto.stock > 0 ? (
+                    <button 
+                      style={estilos.btnAgregar} 
+                      onClick={() => agregarAlCarrito(producto)}
+                    >
                       Agregar al carrito
-                  </button>
+                    </button>
+                  ) : (
+                    <button 
+                      style={{ ...estilos.btnAgregar, backgroundColor: "#b0bec5", cursor: "not-allowed" }} 
+                      disabled
+                    >
+                      Sin stock
+                    </button>
+                  )}
                 </div>
                 ); // ← cerrás el return
     })
