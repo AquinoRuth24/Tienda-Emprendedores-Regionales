@@ -36,7 +36,6 @@ const carritoService = {
 
   //agregar o actializar producto en el carrito, recalcula subtotal
   async agregarProducto(id_cliente, id_producto, cantidad, precio) {
-    await carritoService.getProducto(id_producto); //primer paso del diagrama
     const hayStock = await carritoService.validarStock(id_producto, cantidad);
     if (!hayStock) throw new Error("Stock insuficiente, no se pudo agregar");
 
@@ -96,7 +95,7 @@ const carritoService = {
         "UPDATE Carrito SET subtotal = (SELECT SUM(cantidad * precio) FROM Item_carrito WHERE id_carrito = @id_c) WHERE id_carrito = @id_c",
       );
 
-    return { mensaje: "Carrito actualizado" };
+    return { mensaje:  "producto agregado con éxito" };
   },
   //calcular el subtotal del carrito (se llama desde carritoController.obtenerCarrito)
   async calcularSubtotal(id_carrito) {

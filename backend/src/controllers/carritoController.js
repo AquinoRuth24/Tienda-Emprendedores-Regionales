@@ -7,6 +7,8 @@ const carritoController = {
   agregarItem: async (req, res) => {
     const { id_cliente, id_producto, cantidad, precio } = req.body;
     try {
+       //Lanza excepción si el producto no existe, lo que corta el flujo acá
+      await carritoService.getProducto(id_producto);
       const resultado = await carritoService.agregarProducto(
         id_cliente,
         id_producto,
