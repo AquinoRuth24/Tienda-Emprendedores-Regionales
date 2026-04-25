@@ -83,10 +83,46 @@ const getEmprendedores = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+//obtener un producto por su id
+const getProducto = async (req, res) => {
+  const { id_producto } = req.params;
+  try {
+    const pool = await poolPromise;
+    const resultado = await pool.request()
+      .input("id_producto", sql.Int, id_producto)
+      .query("SELECT * FROM Producto p INNER JOIN Categoria c ON p.id_categoria = c.id_categoria WHERE p.id_producto = @id_producto");
+    if (resultado.recordset.length === 0) return res.status(404).json({ error: "Producto no encontrado" });
+    res.json(resultado.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+//validar stock de un producto antes de agregar al carrito
+const validarStock = async (req, res) => {
+  const { id_producto } = req.params;
+  const { cantidad } = req.query;
+  try {
+    const pool = await poolPromise;
+    const resultado = await pool.request()
+      .input("id_producto", sql.Int, id_producto)
+      .query("SELECT stock FROM Producto WHERE id_producto = @id_producto");
+    const stock = resultado.recordset[0]?.stock ?? 0;
+    if (stock >= parseInt(cantidad)) {
+      res.json({ disponible: true, stock });
+    } else {
+      res.json({ disponible: false, stock });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getProductos,
   getProductosPorCategoria,
   getCategorias,
   getProductosPorEmprendedor,
   getEmprendedores,
+  getProducto, 
+  validarStock 
 };

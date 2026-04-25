@@ -18,7 +18,7 @@ function Inicio() {
     cargarCategorias();
     cargarEmprendedores();
   }, []);
-
+  //cargar emprendedores para el filtro
   const cargarEmprendedores = async () => {
     try {
       const res = await axios.get(
@@ -29,7 +29,7 @@ function Inicio() {
       console.error(err);
     }
   };
-
+  //cargar productos sin filtro
   const cargarProductos = async () => {
     try {
       const res = await axios.get("http://localhost:3001/api/productos");
@@ -38,7 +38,7 @@ function Inicio() {
       console.error(err);
     }
   };
-
+  //cargar categorias para el filtro
   const cargarCategorias = async () => {
     try {
       const res = await axios.get(
@@ -49,7 +49,7 @@ function Inicio() {
       console.error(err);
     }
   };
-
+  //filtrar por categoria
   const filtrarPorCategoria = async (id_categoria) => {
     setCategoriaSeleccionada(id_categoria);
     setEmprendedorSeleccionado(null);
@@ -62,7 +62,7 @@ function Inicio() {
       console.error(err);
     }
   };
-
+  //filtrar por emprendedor
   const filtrarPorEmprendedor = async (id_usuario) => {
     setEmprendedorSeleccionado(id_usuario);
     setCategoriaSeleccionada(null);
@@ -75,48 +75,38 @@ function Inicio() {
       console.error(err);
     }
   };
-
+  //limpiar filtros
   const limpiarFiltros = () => {
     setCategoriaSeleccionada(null);
     setEmprendedorSeleccionado(null);
     cargarProductos();
   };
-
+  //cerrar sesion
   const cerrarSesion = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("cliente");
     navigate("/login");
   };
+  //agregar al carrito
 const agregarAlCarrito = async (producto) => {
-  if (producto.stock <= 0) {
-    alert(`¡Lo sentimos! ${producto.nombre} está agotado por el momento.`);
-    return; // Corta la ejecución acá y no llama al backend
-  }
   const id_cliente = cliente?.id || 1;
-
-  const data = {
-    id_cliente: id_cliente,
-    id_producto: producto.id_producto,
-    cantidad: 1, // Suma de a 1 por clic
-    precio: producto.precio
-  };
-
   try {
     const res = await fetch('http://localhost:3001/api/carrito/agregar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ id_cliente, id_producto: producto.id_producto, cantidad: 1, precio: producto.precio })
     });
-
+    const data = await res.json();
     if (res.ok) {
       alert(`¡${producto.nombre} agregado al carrito con éxito!`);
     } else {
-      alert("Hubo un error al agregar el producto.");
+      alert(data.error || "Stock insuficiente, no se pudo agregar");
     }
   } catch (error) {
     console.error("Error de conexión:", error);
   }
 };
+
   return (
     <div style={estilos.pagina}>
       {/* NAVBAR */}

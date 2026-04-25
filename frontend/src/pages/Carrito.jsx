@@ -71,21 +71,20 @@ useEffect(() => {
       console.error("Error al actualizar cantidad:", error);
     }
   };
-  const finalizarCompra = async () => {
+  
+const finalizarCompra = async () => {
   try {
     const res = await fetch('http://localhost:3001/api/carrito/finalizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        id_carrito: idCarrito, 
-        id_cliente: id_cliente,
-        total: subtotal 
-      })
+      body: JSON.stringify({ id_carrito: idCarrito, id_cliente, total: subtotal })
     });
-
+    const data = await res.json();
     if (res.ok) {
-      alert("¡Gracias por tu compra! El stock ha sido actualizado.");
-      navigate("/inicio"); // Volvemos al inicio para ver el nuevo stock
+      alert("¡Compra realizada con éxito!");
+      navigate("/inicio");
+    } else {
+      alert(data.error || "No hay stock suficiente de uno o más productos");
     }
   } catch (error) {
     console.error("Error al finalizar:", error);

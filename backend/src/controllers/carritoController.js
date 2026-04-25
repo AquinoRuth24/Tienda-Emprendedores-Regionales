@@ -1,82 +1,24 @@
 const { sql, poolPromise } = require("../config/db");
+const carritoService = require("../services/carritoService");
+const facturaService = require("../services/facturaService");
 
 const carritoController = {
-  //AGREGAR O ACTUALIZAR PRODUCTO
+  //agregar producto al carrito,si no existe se crea uno nuevo
   agregarItem: async (req, res) => {
     const { id_cliente, id_producto, cantidad, precio } = req.body;
     try {
-      const pool = await poolPromise;
-
-      //Buscamos si el cliente ya tiene un carrito activo (Estado 1)
-      let carrito = await pool
-        .request()
-        .input("id_cliente", sql.Int, id_cliente)
-        .query(
-          "SELECT id_carrito FROM Carrito WHERE id_cliente = @id_cliente AND id_estado_carrito = 1",
-        );
-
-      let id_carrito;
-
-      if (carrito.recordset.length === 0) {
-        // Si no existe, creamos el carrito (Asumiendo que insertaste el Estado 1 en Estado_carrito)
-        const nuevo = await pool
-          .request()
-          .input("fecha", sql.Date, new Date())
-          .input("id_cliente", sql.Int, id_cliente)
-          .query(`INSERT INTO Carrito (fecha_creacion, subtotal, id_estado_carrito, id_cliente) 
-                  VALUES (@fecha, 0, 1, @id_cliente); 
-                  SELECT SCOPE_IDENTITY() AS id`);
-        id_carrito = nuevo.recordset[0].id;
-      } else {
-        id_carrito = carrito.recordset[0].id_carrito;
-      }
-
-      //Verificamos si el producto ya está en ese carrito
-      const item = await pool
-        .request()
-        .input("id_carrito", sql.Int, id_carrito)
-        .input("id_p", sql.Int, id_producto)
-        .query(
-          "SELECT id_item_carrito FROM Item_carrito WHERE id_carrito = @id_carrito AND id_producto = @id_p",
-        );
-
-      if (item.recordset.length > 0) {
-        //Si ya está, actualizamos cantidad
-        await pool
-          .request()
-          .input("id_item", sql.Int, item.recordset[0].id_item_carrito)
-          .input("cant", sql.Int, cantidad)
-          .query(
-            "UPDATE Item_carrito SET cantidad = cantidad + @cant WHERE id_item_carrito = @id_item",
-          );
-      } else {
-        //Si no está, lo agregamos
-        await pool
-          .request()
-          .input("cant", sql.Int, cantidad)
-          .input("prec", sql.Decimal(10, 2), precio)
-          .input("id_p", sql.Int, id_producto)
-          .input("id_c", sql.Int, id_carrito)
-          .query(
-            "INSERT INTO Item_carrito (cantidad, precio, id_producto, id_carrito) VALUES (@cant, @prec, @id_p, @id_c)",
-          );
-      }
-
-      //Recalculamos el subtotal en la tabla Carrito automáticamente
-      await pool
-        .request()
-        .input("id_c", sql.Int, id_carrito)
-        .query(
-          "UPDATE Carrito SET subtotal = (SELECT SUM(cantidad * precio) FROM Item_carrito WHERE id_carrito = @id_c) WHERE id_carrito = @id_c",
-        );
-
-      res.json({ mensaje: "Carrito actualizado" });
+      const resultado = await carritoService.agregarProducto(
+        id_cliente,
+        id_producto,
+        cantidad,
+        precio,
+      );
+      res.json(resultado);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(400).json({ error: err.message });
     }
   },
-
-  //ELIMINAR ITEM
+  //eliminar un producto del carrito, si la cantidad es 0 se elimina el producto
   eliminarItem: async (req, res) => {
     const { id_item_carrito, id_carrito } = req.body;
     try {
@@ -85,70 +27,54 @@ const carritoController = {
         .request()
         .input("id", sql.Int, id_item_carrito)
         .query("DELETE FROM Item_carrito WHERE id_item_carrito = @id");
-
-      //Actualizar subtotal después de borrar
       await pool
         .request()
         .input("id_c", sql.Int, id_carrito)
         .query(
           "UPDATE Carrito SET subtotal = ISNULL((SELECT SUM(cantidad * precio) FROM Item_carrito WHERE id_carrito = @id_c), 0) WHERE id_carrito = @id_c",
         );
-
       res.json({ mensaje: "Producto eliminado" });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
-  //OBTENER CARRITO
+  //obtener el carrito activo de un cliente
   obtenerCarrito: async (req, res) => {
     const { id_cliente } = req.params;
     try {
       const pool = await poolPromise;
+      const carrito = await carritoService.obtenerCarritoActivo(id_cliente);
+      if (!carrito)
+        return res.json({ id_carrito: null, items: [], subtotal: 0 });
 
-      //Buscamos el carrito activo del cliente
-      const carrito = await pool
-        .request()
-        .input("id_cliente", sql.Int, id_cliente)
-        .query(
-          "SELECT id_carrito, subtotal FROM Carrito WHERE id_cliente = @id_cliente AND id_estado_carrito = 1",
-        );
-
-      if (carrito.recordset.length === 0) {
-        return res.json({ id_carrito: null, items: [], subtotal: 0 }); // Carrito vacío
-      }
-
-      const id_carrito = carrito.recordset[0].id_carrito;
-      const subtotal = carrito.recordset[0].subtotal;
-
-      //Traemos los productos de ese carrito
       const items = await pool
         .request()
-        .input("id_carrito", sql.Int, id_carrito).query(`
-          SELECT i.id_item_carrito, i.cantidad, i.precio, p.nombre, p.imagen, p.stock 
-          FROM Item_carrito i
-          INNER JOIN Producto p ON i.id_producto = p.id_producto
-          WHERE i.id_carrito = @id_carrito
-        `);
+        .input("id_carrito", sql.Int, carrito.id_carrito)
+        .query(`SELECT i.id_item_carrito, i.cantidad, i.precio, p.nombre, p.imagen, p.stock
+                FROM Item_carrito i
+                INNER JOIN Producto p ON i.id_producto = p.id_producto
+                WHERE i.id_carrito = @id_carrito`);
 
-      res.json({ id_carrito, items: items.recordset, subtotal });
+      res.json({
+        id_carrito: carrito.id_carrito,
+        items: items.recordset,
+        subtotal: carrito.subtotal,
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
-  //ACTUALIZAR CANTIDAD
+  //actualizar la cantidad de un producto en el carrito, si la cantidad es 0 se elimina el producto
   actualizarCantidad: async (req, res) => {
     const { id_item_carrito, nueva_cantidad, id_carrito } = req.body;
     try {
       const pool = await poolPromise;
-
       if (nueva_cantidad <= 0) {
-        //Si llega a 0, lo eliminamos directamente
         await pool
           .request()
           .input("id", sql.Int, id_item_carrito)
           .query("DELETE FROM Item_carrito WHERE id_item_carrito = @id");
       } else {
-        //Si no, actualizamos el número
         await pool
           .request()
           .input("id", sql.Int, id_item_carrito)
@@ -157,21 +83,20 @@ const carritoController = {
             "UPDATE Item_carrito SET cantidad = @cant WHERE id_item_carrito = @id",
           );
       }
-
-      //Recalculamos el subtotal (ISNULL evita que quede en NULL si el carrito queda vacío)
       await pool
         .request()
         .input("id_c", sql.Int, id_carrito)
         .query(
           "UPDATE Carrito SET subtotal = ISNULL((SELECT SUM(cantidad * precio) FROM Item_carrito WHERE id_carrito = @id_c), 0) WHERE id_carrito = @id_c",
         );
-
       res.json({ mensaje: "Cantidad actualizada correctamente" });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
+  //finaliza la compra
   finalizarCompra: async (req, res) => {
+    console.log("BODY:", req.body);
     const { id_carrito, id_cliente, total } = req.body;
     const pool = await poolPromise;
     const transaction = new sql.Transaction(pool);
@@ -179,72 +104,53 @@ const carritoController = {
     try {
       await transaction.begin();
 
-      //Obtenemos los items del carrito
-      const itemsRequest = new sql.Request(transaction);
-      const items = await itemsRequest
-        .input("id_c", sql.Int, id_carrito)
-        .query(
-          "SELECT id_producto, cantidad FROM Item_carrito WHERE id_carrito = @id_c",
-        );
+      //Valida el stock de todos los productos
+      const items = await carritoService.validarStockProductos(
+        id_carrito,
+        transaction,
+      );
 
-      //Descontamos el stock de cada producto
-      for (const item of items.recordset) {
-        const updateStockReq = new sql.Request(transaction);
-        await updateStockReq
-          .input("id_p", sql.Int, item.id_producto)
-          .input("cant", sql.Int, item.cantidad)
-          .query(
-            "UPDATE Producto SET stock = stock - @cant WHERE id_producto = @id_p",
-          );
-      }
+      //Calcula el subtotal desde la BD
+      const subtotal = await carritoService.calcularSubtotal(id_carrito);
 
-      //Pasamos el carrito a estado 2
-      const updateCarritoReq = new sql.Request(transaction);
-      await updateCarritoReq
+      //Actualizar stock
+      await carritoService.actualizarStock(items, transaction);
+
+      //Cambiar estado del carrito
+      await new sql.Request(transaction)
         .input("id_c", sql.Int, id_carrito)
         .query(
           "UPDATE Carrito SET id_estado_carrito = 2 WHERE id_carrito = @id_c",
         );
 
-      //Creamos el Pedido
-      const pedidoReq = new sql.Request(transaction);
-      const pedidoResult = await pedidoReq
+      //Crea el pedido
+      const pedidoResult = await new sql.Request(transaction)
         .input("id_cliente", sql.Int, id_cliente)
-        .input("id_carrito", sql.Int, id_carrito).query(`
-    INSERT INTO Pedido (fecha_pedido, estado_pedido, id_cliente, id_carrito)
-    VALUES (GETDATE(), 'pendiente', @id_cliente, @id_carrito);
-
-    SELECT SCOPE_IDENTITY() AS id_pedido;
-  `);
-
+        .input("id_carrito", sql.Int, id_carrito)
+        .query(`INSERT INTO Pedido (fecha_pedido, estado_pedido, id_cliente, id_carrito)
+              VALUES (GETDATE(), 'pendiente', @id_cliente, @id_carrito);
+              SELECT SCOPE_IDENTITY() AS id_pedido`);
       const id_pedido = pedidoResult.recordset[0].id_pedido;
 
-      //Creamos la Factura
-      const facturaReq = new sql.Request(transaction);
-      const facturaResult = await facturaReq
-        .input("total", sql.Decimal(10, 2), total)
-        .input("id_pedido", sql.Int, id_pedido).query(`
-    DECLARE @nuevoId INT;
-    SELECT @nuevoId = ISNULL(MAX(id_factura), 0) + 1 FROM Factura;
+      //Crea la factura
+      const id_factura = await facturaService.crearFactura(
+        id_pedido,
+        subtotal,
+        transaction,
+      );
 
-    INSERT INTO Factura (id_factura, fecha, total, id_pedido)
-    VALUES (@nuevoId, GETDATE(), @total, @id_pedido);
-
-    SELECT @nuevoId AS id_factura;
-  `);
-
-      const id_factura = facturaResult.recordset[0].id_factura;
+      //Carga el detalle_factura
+      await facturaService.cargarDetalles(id_factura, items, transaction);
 
       await transaction.commit();
       res.json({
-        mensaje: "Compra finalizada con éxito",
-        id_pedido: id_pedido, //devolvemos el id_pedido al frontend
+        mensaje: "Compra realizada con éxito",
+        id_factura,
+        id_pedido,
       });
     } catch (err) {
       await transaction.rollback();
-      res
-        .status(500)
-        .json({ error: "Error al finalizar la compra: " + err.message });
+      res.status(400).json({ error: err.message });
     }
   },
 };
