@@ -1,119 +1,114 @@
-const { sql, poolPromise } = require("../config/db");
+const productoService = require("../services/productoService");
 
-//OBTENER TODOS LOS PRODUCTOS CON SU CATEGORÍA
+//obtener todos los productos disponibles 
 const getProductos = async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const resultado = await pool.request().query(`
-        SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-            c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
-        FROM Producto p
-        INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
-    `);
-    res.json(resultado.recordset);
+    const productos = await productoService.getProductos();
+    res.json(productos);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
-//OBTENER PRODUCTOS POR CATEGORÍA
+//obtener producos por categoria
 const getProductosPorCategoria = async (req, res) => {
   const { id_categoria } = req.params;
   try {
-    const pool = await poolPromise;
-    const resultado = await pool
-      .request()
-      .input("id_categoria", sql.Int, id_categoria).query(`
-        SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-            c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
-        FROM Producto p
-        INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
-        WHERE p.id_categoria = @id_categoria
-    `);
-    res.json(resultado.recordset);
+    const productos =
+      await productoService.getProductosPorCategoria(
+        id_categoria,
+      );
+    res.json(productos);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
-//OBTENER TODAS LAS CATEGORÍAS
+//obtener todas las categorias
 const getCategorias = async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const resultado = await pool.request().query("SELECT * FROM Categoria");
-    res.json(resultado.recordset);
+    const categorias =
+      await productoService.getCategorias();
+    res.json(categorias);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
-//OBTENER PRODUCTOS POR EMPRENDEDOR
-const getProductosPorEmprendedor = async (req, res) => {
+//obtener productos por emprendedor
+const getProductosPorEmprendedor = async (
+  req,
+  res,
+) => {
   const { id_usuario } = req.params;
   try {
-    const pool = await poolPromise;
-    const resultado = await pool
-      .request()
-      .input("id_usuario", sql.Int, id_usuario).query(`
-        SELECT p.id_producto, p.nombre, p.descripcion, p.stock, p.precio,
-          c.descripcion AS categoria, p.id_categoria, p.id_usuario, p.imagen
-        FROM Producto p
-        INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
-        WHERE p.id_usuario = @id_usuario
-    `);
-    res.json(resultado.recordset);
+    const productos =
+      await productoService.getProductosPorEmprendedor(
+        id_usuario,
+      );
+    res.json(productos);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
-//OBTENER TODOS LOS EMPRENDEDORES
+
+//obtener todos los emprendedores
 const getEmprendedores = async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const resultado = await pool.request().query(`
-        SELECT DISTINCT u.id_usuario, u.apellidoNombre,
-              STRING_AGG(c.descripcion, ', ') AS categorias
-        FROM Usuario u
-        INNER JOIN Producto p ON u.id_usuario = p.id_usuario
-        INNER JOIN Categoria c ON p.id_categoria = c.id_categoria
-        GROUP BY u.id_usuario, u.apellidoNombre
-      `);
-    res.json(resultado.recordset);
+    const emprendedores =
+      await productoService.getEmprendedores();
+    res.json(emprendedores);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
-//obtener un producto por su id
+
+//obtener un producto por su ID
 const getProducto = async (req, res) => {
   const { id_producto } = req.params;
   try {
-    const pool = await poolPromise;
-    const resultado = await pool.request()
-      .input("id_producto", sql.Int, id_producto)
-      .query("SELECT * FROM Producto p INNER JOIN Categoria c ON p.id_categoria = c.id_categoria WHERE p.id_producto = @id_producto");
-    if (resultado.recordset.length === 0) return res.status(404).json({ error: "Producto no encontrado" });
-    res.json(resultado.recordset[0]);
+    const producto =
+      await productoService.getProducto(
+        id_producto,
+      );
+    res.json(producto);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.message === "Producto no encontrado") {
+      return res.status(404).json({
+        error: err.message,
+      });
+    }
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
-//validar stock de un producto antes de agregar al carrito
+
+//validar stock de un producto
 const validarStock = async (req, res) => {
   const { id_producto } = req.params;
   const { cantidad } = req.query;
   try {
-    const pool = await poolPromise;
-    const resultado = await pool.request()
-      .input("id_producto", sql.Int, id_producto)
-      .query("SELECT stock FROM Producto WHERE id_producto = @id_producto");
-    const stock = resultado.recordset[0]?.stock ?? 0;
-    if (stock >= parseInt(cantidad)) {
-      res.json({ disponible: true, stock });
-    } else {
-      res.json({ disponible: false, stock });
-    }
+    const resultado =
+      await productoService.validarStock(
+        id_producto,
+        cantidad,
+      );
+    res.json(resultado);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
@@ -123,6 +118,6 @@ module.exports = {
   getCategorias,
   getProductosPorEmprendedor,
   getEmprendedores,
-  getProducto, 
-  validarStock 
+  getProducto,
+  validarStock,
 };
