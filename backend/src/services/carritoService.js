@@ -1,8 +1,28 @@
 const { sql, poolPromise } = require("../config/db");
+const facturaService = require("./facturaService");
 
 const carritoService = {
-  //validar el stock de un producto antes de agregarlo al carrito
-  async validarStock(id_producto, cantidad) {
+
+  //obtener un producto por su id
+  async getProducto(id_producto) {
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("id_producto", sql.Int, id_producto)
+      .query(`
+        SELECT *
+        FROM Producto
+        WHERE id_producto = @id_producto
+      `);
+
+    if (!result.recordset[0]) {
+      throw new Error("Producto no encontrado");
+    }
+    return result.recordset[0];
+  },
+
+  //verificar el stock de un producto
+  async verificarStock(id_producto) {
     const pool = await poolPromise;
     const result = await pool
       .request()
@@ -13,7 +33,7 @@ const carritoService = {
         WHERE id_producto = @id_producto
       `);
     const stock = result.recordset[0]?.stock ?? 0;
-    return stock >= cantidad;
+    return stock;
   },
 
   //obtener el carrito activo de un cliente
@@ -31,25 +51,6 @@ const carritoService = {
     return result.recordset[0] ?? null;
   },
 
-  //obtener un producto por su id
-  async getProducto(id_producto) {
-    const pool = await poolPromise;
-    const result = await pool
-      .request()
-      .input("id_producto", sql.Int, id_producto)
-      .query(`
-        SELECT *
-        FROM Producto
-        WHERE id_producto = @id_producto
-      `);
-
-    //si el producto no existe lanza error
-    if (!result.recordset[0]) {
-      throw new Error("Producto no encontrado");
-    }
-    return result.recordset[0];
-  },
-
   //obtener los items de un carrito
   async obtenerItemsCarrito(id_carrito) {
     const pool = await poolPromise;
@@ -59,6 +60,7 @@ const carritoService = {
       .query(`
         SELECT 
           i.id_item_carrito,
+          i.id_producto,
           i.cantidad,
           i.precio,
           p.nombre,
@@ -92,24 +94,13 @@ const carritoService = {
       `);
   },
 
-  //agregar o actualizar producto en el carrito
+  //agregar producto al carrito
   async agregarProducto(id_cliente, id_producto, cantidad, precio) {
-    //validar stock
-    const hayStock = await carritoService.validarStock(
-      id_producto,
-      cantidad,
-    );
-
-    if (!hayStock) {
-      throw new Error("Stock insuficiente");
-    }
-
     const pool = await poolPromise;
-    //buscar carrito activo
+
     let carrito = await carritoService.obtenerCarritoActivo(id_cliente);
     let id_carrito;
 
-    //crear carrito si no existe
     if (!carrito) {
       const nuevo = await pool
         .request()
@@ -138,7 +129,6 @@ const carritoService = {
       id_carrito = carrito.id_carrito;
     }
 
-    //verificar si el producto ya existe en el carrito
     const item = await pool
       .request()
       .input("id_carrito", sql.Int, id_carrito)
@@ -149,15 +139,11 @@ const carritoService = {
         WHERE id_carrito = @id_carrito
         AND id_producto = @id_p
       `);
-    //si el item existe suma cantidad
+
     if (item.recordset.length > 0) {
       await pool
         .request()
-        .input(
-          "id_item",
-          sql.Int,
-          item.recordset[0].id_item_carrito,
-        )
+        .input("id_item", sql.Int, item.recordset[0].id_item_carrito)
         .input("cant", sql.Int, cantidad)
         .query(`
           UPDATE Item_carrito
@@ -165,7 +151,6 @@ const carritoService = {
           WHERE id_item_carrito = @id_item
         `);
     } else {
-      //si no existe inserta nuevo item
       await pool
         .request()
         .input("cant", sql.Int, cantidad)
@@ -189,12 +174,10 @@ const carritoService = {
           )
         `);
     }
-    //recalcular subtotal del carrito
+
     await carritoService.recalcularSubtotal(id_carrito);
 
-    return {
-      mensaje: "Producto agregado con éxito",
-    };
+    return { mensaje: "producto agregado con éxito" };
   },
 
   //obtener subtotal del carrito
@@ -228,21 +211,17 @@ const carritoService = {
         WHERE i.id_carrito = @id_c
       `);
     const items = result.recordset;
-    //validar carrito vacío
+
     if (items.length === 0) {
       throw new Error("El carrito está vacío");
     }
-    //validar stock y precio de cada producto
+
     for (const item of items) {
       if (item.stock < item.cantidad) {
-        throw new Error(
-          `Stock insuficiente para el producto ID ${item.id_producto}`,
-        );
+        throw new Error(`Stock insuficiente para el producto ID ${item.id_producto}`);
       }
       if (item.precio === null || item.precio === undefined) {
-        throw new Error(
-          `El producto ID ${item.id_producto} no tiene precio válido`,
-        );
+        throw new Error(`El producto ID ${item.id_producto} no tiene precio válido`);
       }
     }
     return items;
@@ -267,7 +246,6 @@ const carritoService = {
   async eliminarItem(id_item_carrito, id_carrito) {
     const pool = await poolPromise;
 
-    //eliminar item
     await pool
       .request()
       .input("id", sql.Int, id_item_carrito)
@@ -275,22 +253,16 @@ const carritoService = {
         DELETE FROM Item_carrito
         WHERE id_item_carrito = @id
       `);
-    //recalcular subtotal
+
     await carritoService.recalcularSubtotal(id_carrito);
 
-    return {
-      mensaje: "Producto eliminado",
-    };
+    return { mensaje: "Producto eliminado" };
   },
 
   //actualizar cantidad de un producto del carrito
-  async actualizarCantidad(
-    id_item_carrito,
-    nueva_cantidad,
-    id_carrito,
-  ) {
+  async actualizarCantidad(id_item_carrito, nueva_cantidad, id_carrito) {
     const pool = await poolPromise;
-    //si la cantidad es menor o igual a 0 elimina el item
+
     if (nueva_cantidad <= 0) {
       await pool
         .request()
@@ -300,7 +272,6 @@ const carritoService = {
           WHERE id_item_carrito = @id
         `);
     } else {
-      //actualizar cantidad del item
       await pool
         .request()
         .input("id", sql.Int, id_item_carrito)
@@ -312,12 +283,9 @@ const carritoService = {
         `);
     }
 
-    //recalcular subtotal del carrito
     await carritoService.recalcularSubtotal(id_carrito);
 
-    return {
-      mensaje: "Cantidad actualizada correctamente",
-    };
+    return { mensaje: "Cantidad actualizada correctamente" };
   },
 
   //cambiar estado del carrito
@@ -358,6 +326,40 @@ const carritoService = {
       `);
 
     return result.recordset[0].id_pedido;
+  },
+
+  //finalizar compra
+  async finalizarCompra(id_carrito, id_cliente) {
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      const items = await carritoService.obtenerItemsCarrito(id_carrito);
+      await carritoService.validarStockProductos(id_carrito, transaction);
+      await carritoService.actualizarStock(items, transaction);
+
+      const subtotal = await carritoService.calcularSubtotal(id_carrito);
+
+      const id_pedido = await carritoService.crearPedido(
+        id_cliente, id_carrito, transaction
+      );
+      await carritoService.cambiarEstadoCarrito(id_carrito, transaction);
+
+      const id_factura = await facturaService.crearFactura(
+        id_pedido, subtotal, transaction
+      );
+      await facturaService.cargarDetalles(id_factura, items, transaction);
+
+      await transaction.commit();
+
+      return { mensaje: "Compra realizada con éxito", id_pedido, id_factura };
+
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   },
 };
 
