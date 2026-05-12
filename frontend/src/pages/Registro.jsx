@@ -11,6 +11,7 @@ function Registro() {
     confirmar: "",
     DNI: "",
     fecha_nacimiento: "",
+    telefono: "",
   });
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
@@ -53,10 +54,11 @@ function Registro() {
         contraseña: form.contraseña,
         DNI: parseInt(form.DNI),
         fecha_nacimiento: form.fecha_nacimiento,
+        telefono: form.telefono,
       });
 
       setExito("¡Registro exitoso! Redirigiendo...");
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Error al registrarse");
     }
@@ -133,17 +135,34 @@ function Registro() {
                 />
               </div>
             </div>
-
-            <div style={estilos.campo}>
-              <label style={estilos.label}>Fecha de Nacimiento</label>
-              <input
-                type="date"
-                name="fecha_nacimiento"
-                value={form.fecha_nacimiento}
-                onChange={handleChange}
-                style={estilos.input}
-                required
-              />
+              
+              <div style={estilos.fila}>
+              <div style={estilos.campo}>
+                <label style={estilos.label}>Fecha de Nacimiento</label>
+                <input
+                  type="date"
+                  name="fecha_nacimiento"
+                  value={form.fecha_nacimiento}
+                  onChange={handleChange}
+                  style={estilos.input}
+                  required
+                />
+              </div>
+              <div style={estilos.campo}>
+                <label style={estilos.label}>
+                  Teléfono{" "}
+                  <span style={{ color: "#aaa", fontSize: "11px" }}>(opcional)</span>
+                </label>
+                <input
+                  type="tel"
+                  name="telefono"
+                  placeholder="3794123456"
+                  value={form.telefono}
+                  onChange={handleChange}
+                  style={estilos.input}
+                  maxLength={20}
+                />
+              </div>
             </div>
 
             <div style={estilos.fila}>

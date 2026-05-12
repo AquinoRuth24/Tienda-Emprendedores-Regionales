@@ -21,8 +21,8 @@ function Login() {
       })
 
       //guarda token en el navegador
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('cliente', JSON.stringify(res.data.cliente))
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("cliente", JSON.stringify(res.data.cliente));
 
       //redirige a inicio
       navigate('/inicio')

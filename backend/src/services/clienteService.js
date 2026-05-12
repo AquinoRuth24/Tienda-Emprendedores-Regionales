@@ -23,20 +23,26 @@ async validarDatosRegistro(email, DNI) {
   //buscar cliente por email
 async buscarPorEmail(email) {
     const pool = await poolPromise;
-
-    const result = await pool.request().input("email", sql.VarChar, email)
+    const result = await pool
+    .request()
+    .input("email", sql.VarChar, email)
     .query(`
-        SELECT *
-        FROM Clientes
-        WHERE email = @email
+        SELECT c.*, e.descripcion AS estado_desc
+        FROM Clientes c
+        JOIN Estado e ON c.id_estado = e.id_estado
+        WHERE c.email = @email
     `);
 
     const cliente = result.recordset[0];
 
     if (!cliente) {
-    throw new Error("Cliente no encontrado.");
+    throw new Error("Email o contraseña incorrectos.");
     }
 
+    // Verificar que el cliente esté activo (id_estado = 1)
+    if (cliente.id_estado !== 1) {
+    throw new Error("Tu cuenta está inactiva o bloqueada.");
+    }
     return cliente;
 },
 
@@ -79,6 +85,9 @@ async guardarCliente(
     contraseña,
     DNI,
     fecha_nacimiento,
+    telefono = "",  //si el formulario no incluye telefono, se guarda vacio
+    fecha_registro = new Date(),
+    id_estado = 1 //activo por defecto
 ) {
     const pool = await poolPromise;
 
@@ -88,14 +97,21 @@ async guardarCliente(
     .input("email", sql.VarChar, email)
     .input("contraseña", sql.VarChar, contraseña)
     .input("DNI", sql.Int, DNI)
-    .input("fecha_nacimiento", sql.Date, fecha_nacimiento).query(`
+    .input("fecha_nacimiento", sql.Date, fecha_nacimiento)
+    .input("telefono", sql.VarChar, telefono)
+    .input("fecha_registro", sql.Date, fecha_registro)
+    .input("id_estado", sql.Int, id_estado)
+    .query(`
         INSERT INTO Clientes
         (
         apellidoNombre,
         email,
         contraseña,
         DNI,
-        fecha_nacimiento
+        fecha_nacimiento,
+        telefono,
+        fecha_registro,
+        id_estado
         )
         VALUES
         (
@@ -104,6 +120,9 @@ async guardarCliente(
         @contraseña,
         @DNI,
         @fecha_nacimiento
+        ,@telefono,
+        @fecha_registro,
+        @id_estado
         )
     `);
 },

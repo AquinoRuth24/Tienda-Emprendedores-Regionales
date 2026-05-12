@@ -8,6 +8,7 @@ const registrar = async (req, res) => {
     contraseña,
     DNI,
     fecha_nacimiento,
+    telefono,
   } = req.body;
 
   try {
@@ -29,6 +30,9 @@ const registrar = async (req, res) => {
       hash,
       DNI,
       fecha_nacimiento,
+      telefono,
+      new Date(),//fecha registro actual
+      1 //activo por defecto
     );
 
     res.json({
@@ -63,6 +67,7 @@ const login = async (req, res) => {
     res.json({
       token,
       cliente: {
+        id:     cliente.id_cliente,
         nombre: cliente.apellidoNombre,
         email: cliente.email,
       },
