@@ -16,8 +16,13 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 //Rutas
 app.use('/api/cliente', clienteRoutes);//se define la ruta para el manejo de autentificacion de clientes.
-app.use('/api/productos', productoRoutes);
-app.use('/api/carrito', require('./routes/carritoRoutes'));
+
+app.use('/api/productos', productoRoutes);//se define la ruta para el manejo de productos
+
+app.use('/api/carrito', require('./routes/carritoRoutes'));//se define la ruta para el manejo del carrito
+
+app.use('/api/envio', require('./routes/envioRoutes'));//se define la ruta para el manejo de envios
+
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' });
 });
