@@ -310,23 +310,21 @@ const carritoService = {
         INSERT INTO Pedido
         (
           fecha_pedido,
-          estado_pedido,
+          id_estado_pedido,
           id_cliente,
           id_carrito
         )
         VALUES
         (
           GETDATE(),
-          'pendiente',
+          1,               -- 1 = 'Pendiente' según tus INSERTs
           @id_cliente,
           @id_carrito
         );
-
         SELECT SCOPE_IDENTITY() AS id_pedido
       `);
-
     return result.recordset[0].id_pedido;
-  },
+},
 
   //finalizar compra
   async finalizarCompra(id_carrito, id_cliente) {
