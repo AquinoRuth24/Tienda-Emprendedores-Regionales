@@ -191,7 +191,7 @@ const carritoService = {
         FROM Carrito
         WHERE id_carrito = @id_c
       `);
-    return result.recordset[0]?.subtotal ?? 0;
+    return result.recordset[0]?.total_carrito ?? 0;
   },
 
   //validar stock de todos los productos antes de finalizar compra

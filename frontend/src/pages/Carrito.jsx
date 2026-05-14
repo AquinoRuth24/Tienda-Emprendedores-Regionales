@@ -101,7 +101,7 @@ const finalizarCompra = async () => {
       <div style={estilos.contenido}>
         {items.length === 0 ? (
           <div style={estilos.tarjeta}>
-            <h2>Tu carrito está vacío 🛒</h2>
+            <h2>Tu carrito está vacío</h2>
             <p>¡Agregá algunos productos de nuestros emprendedores!</p>
           </div>
         ) : (
@@ -134,7 +134,7 @@ const finalizarCompra = async () => {
                   <div style={estilos.accionesItem}>
                     <h4>${item.cantidad * item.precio}</h4>
                     <button style={estilos.btnEliminar} onClick={() => eliminarItem(item.id_item_carrito)}>
-                      ❌ Eliminar
+                    Eliminar
                     </button>
                   </div>
                 </div>
@@ -157,20 +157,113 @@ const finalizarCompra = async () => {
 }
 
 const estilos = {
-  pagina: { minHeight: "100vh", backgroundColor: "#d6e8f7", fontFamily: "Arial, sans-serif" },
-  navbar: { backgroundColor: "#4ab8d8", padding: "15px 30px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" },
-  logo: { color: "white", margin: 0 },
-  btnNav: { backgroundColor: "transparent", color: "white", border: "2px solid white", borderRadius: "20px", padding: "8px 15px", cursor: "pointer" },
-  contenido: { padding: "40px", maxWidth: "1000px", margin: "0 auto" },
-  tarjeta: { backgroundColor: "white", padding: "30px", borderRadius: "10px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  carritoLayout: { display: "flex", gap: "20px", alignItems: "flex-start" },
-  listaItems: { flex: 2, display: "flex", flexDirection: "column", gap: "15px" },
-  item: { backgroundColor: "white", padding: "20px", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  infoItem: { display: "flex", flexDirection: "column", gap: "5px" },
-  accionesItem: { textAlign: "right", display: "flex", flexDirection: "column", gap: "10px" },
-  btnEliminar: { backgroundColor: "#ff4d4d", color: "white", border: "none", padding: "8px 12px", borderRadius: "5px", cursor: "pointer" },
-  resumen: { flex: 1, backgroundColor: "white", padding: "20px", borderRadius: "10px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  btnFinalizar: { backgroundColor: "#4ab8d8", color: "white", border: "none", padding: "15px", borderRadius: "8px", width: "100%", fontSize: "16px", cursor: "pointer", marginTop: "15px", fontWeight: "bold" },
-  btnCant: {backgroundColor: "#eaf4fb",color: "#4ab8d8",border: "1px solid #4ab8d8",borderRadius: "50%",width: "25px",height: "25px",display: "flex",justifyContent: "center",alignItems: "center",cursor: "pointer",fontWeight: "bold"}
+  pagina: { 
+    minHeight: "100vh", 
+    backgroundColor: "#d6e8f7", 
+    fontFamily: "Arial, sans-serif" 
+  },
+  navbar: { 
+    backgroundColor: "#4ab8d8", 
+    padding: "15px 30px", 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)" 
+  },
+  logo: { 
+    color: "white", 
+    margin: 0 
+  },
+  btnNav: { 
+    backgroundColor: "transparent", 
+    color: "white", 
+    border: "2px solid white", 
+    borderRadius: "20px", 
+    padding: "8px 15px", 
+    cursor: "pointer" 
+  },
+  contenido: { 
+    padding: "40px", 
+    maxWidth: "1000px", 
+    margin: "0 auto" 
+  },
+  tarjeta: { 
+    backgroundColor: "white", 
+    padding: "30px", 
+    borderRadius: "10px", 
+    textAlign: "center", 
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)" 
+  },
+  carritoLayout: { 
+    display: "flex", 
+    gap: "20px", 
+    alignItems: "flex-start" 
+  },
+  listaItems: { 
+    flex: 2, 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "15px" 
+  },
+  item: { 
+    backgroundColor: "white", 
+    padding: "20px", 
+    borderRadius: "10px", 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)" 
+  },
+  infoItem: { 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "5px" 
+  },
+  accionesItem: { 
+    textAlign: "right", 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "10px" 
+  },
+  btnEliminar: { 
+    backgroundColor: "#ff4d4d", 
+    color: "white", border: "none", 
+    padding: "8px 12px", 
+    borderRadius: "5px", 
+    cursor: "pointer" 
+  },
+  resumen: { 
+    flex: 1, 
+    backgroundColor: "white", 
+    padding: "20px", 
+    borderRadius: "10px", 
+    textAlign: "center", 
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)" 
+  },
+  btnFinalizar: { 
+    backgroundColor: "#4ab8d8", 
+    color: "white", 
+    border: "none", 
+    padding: "15px", 
+    borderRadius: "8px", 
+    width: "100%", 
+    fontSize: "16px", 
+    cursor: "pointer", 
+    marginTop: "15px", 
+    fontWeight: "bold" 
+  },
+  btnCant: {
+    backgroundColor: "#eaf4fb",
+    color: "#4ab8d8",
+    border: "1px solid #4ab8d8",
+    borderRadius: "50%",
+    width: "25px",
+    height: "25px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+    fontWeight: "bold"
+  }
 };
 export default Carrito;

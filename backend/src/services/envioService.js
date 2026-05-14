@@ -24,6 +24,14 @@ const pedido = await pool
     if (!pedido.recordset[0]) {
     throw new Error("Pedido no encontrado");
     }
+//verificar que el pedido no tenga ya un envío registrado
+const yaExiste = await pool
+    .request()
+    .input("id_pedido_check", sql.Int, id_pedido)
+    .query("SELECT id_envio FROM Envio WHERE id_pedido = @id_pedido_check");
+    if (yaExiste.recordset[0]) {
+    throw new Error("Este pedido ya tiene un envío registrado");
+    }
 //calcular fecha estimada de entrega costo 0, fecha estimada el mismo día
 await pool
     .request()
@@ -53,72 +61,78 @@ async calcularCostoEnvio(id_tipo_envio) {
     return result.recordset[0].costo_base;
 },
 
-//buscar provincia por nombre o crearla si no existe
-//el cliente escribe el nombre de la provincia libremente
+//buscar provincia ignorando mayúsculas y espacios, o crearla si no existe
+//LOWER(TRIM()) evita duplicados como "corrientes", "Corrientes", "Ctes "
 async obtenerOCrearProvincia(nombreProvincia, transaction) {
-    const req1 = new sql.Request(transaction);
-    const existe = await req1
-    .input("nombre", sql.VarChar, nombreProvincia)
-    .query("SELECT id_provincia FROM Provincia WHERE nombre = @nombre"); 
+const req1 = new sql.Request(transaction);
+const existe = await req1
+    .input("nombre", sql.VarChar, nombreProvincia.trim())
+    .query(
+        "SELECT id_provincia, nombre FROM Provincia WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(@nombre))"
+    );
     if (existe.recordset[0]) {
     return existe.recordset[0].id_provincia;
     }
-    //si no existe la provincia se crea
-    const req2 = new sql.Request(transaction);
-    const nueva = await req2
-    .input("nombre", sql.VarChar, nombreProvincia)
+
+//si no existe se crea con el nombre tal como lo escribió el usuario (trim aplicado)
+const req2 = new sql.Request(transaction);
+const nueva = await req2
+    .input("nombre", sql.VarChar, nombreProvincia.trim())
     .query(`INSERT INTO Provincia (nombre) VALUES (@nombre);
-            SELECT SCOPE_IDENTITY() AS id_provincia`);
+            SELECT SCOPE_IDENTITY() AS id_provincia`); 
     return nueva.recordset[0].id_provincia;
 },
-//buscar ciudad por nombre y provincia o crearla si no existe
-//el cliente escribe el nombre de la ciudad libremente
-async obtenerOCrearCiudad(nombreCiudad, id_provincia, transaction) {
+//buscar ciudad ignorando mayúsculas y espacios, o crearla si no existe
+//LOWER(TRIM()) evita duplicados como "corrientes capital", "Capital", "Ctes capital"
+async obtenerOCrearCiudad(nombreCiudad, codigoPostal, id_provincia, transaction) {
     const req1 = new sql.Request(transaction);
     const existe = await req1
-    .input("nombre", sql.VarChar, nombreCiudad)
+    .input("nombre", sql.VarChar, nombreCiudad.trim())
     .input("id_provincia", sql.Int, id_provincia)
     .query(
-        "SELECT id_ciudad FROM Ciudad WHERE nombre = @nombre AND id_provincia = @id_provincia"
+        `SELECT id_ciudad FROM Ciudad 
+        WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(@nombre)) 
+        AND id_provincia = @id_provincia`
     );
     if (existe.recordset[0]) {
     return existe.recordset[0].id_ciudad;
     }
-//si no existe la ciudad se crea con codigo_postal 0 por defecto
+    //si no existe se crea con el código postal ingresado por el cliente
     const req2 = new sql.Request(transaction);
     const nueva = await req2
-    .input("nombre", sql.VarChar, nombreCiudad)
+    .input("nombre", sql.VarChar, nombreCiudad.trim())
+    .input("codigo_postal", sql.Int, codigoPostal || 0)
     .input("id_provincia", sql.Int, id_provincia)
     .query(`INSERT INTO Ciudad (nombre, codigo_postal, id_provincia) 
-            VALUES (@nombre, 0, @id_provincia);
+            VALUES (@nombre, @codigo_postal, @id_provincia);
             SELECT SCOPE_IDENTITY() AS id_ciudad`);
     return nueva.recordset[0].id_ciudad;
 },
 
-//registrar la dirección de entrega
-  //el cliente ingresó provincia y ciudad como texto, el backend resuelve los ids
-  //solo id_ciudad se guarda en Direccion (la provincia queda en Ciudad)
-async registrarDireccion(calle, numero, descripcion, nombreCiudad, nombreProvincia, transaction) {
+async registrarDireccion(calle, numero, descripcion, nombreCiudad, codigoPostal, nombreProvincia, transaction) {
     if (!calle || !numero || !nombreCiudad || !nombreProvincia) {
     throw new Error("Provincia, ciudad, calle y número son obligatorios");
     }
-    //resolver id_provincia (buscar o crear)
+    //id_provincia normalizando el nombre
     const id_provincia = await envioService.obtenerOCrearProvincia(
     nombreProvincia,
     transaction
     );
-//resolver id_ciudad (buscar o crear dentro de esa provincia)
-    const id_ciudad = await envioService.obtenerOCrearCiudad(
+
+//id_ciudad normalizando el nombre, con código postal del cliente
+const id_ciudad = await envioService.obtenerOCrearCiudad(
     nombreCiudad,
+    codigoPostal,
     id_provincia,
     transaction
     );
-//insertar la dirección con el id_ciudad resuelto
-    const req = new sql.Request(transaction);
-    const result = await req
-    .input("calle", sql.VarChar, calle)
+
+//insertar la dirección con el id_ciudad 
+const req = new sql.Request(transaction);
+const result = await req
+    .input("calle", sql.VarChar, calle.trim())
     .input("numero", sql.Int, numero)
-    .input("descripcion", sql.VarChar, descripcion || null)
+    .input("descripcion", sql.VarChar, descripcion ? descripcion.trim() : null)
     .input("id_ciudad", sql.Int, id_ciudad)
     .query(`INSERT INTO Direccion (calle, numero, descripcion, id_ciudad)
             VALUES (@calle, @numero, @descripcion, @id_ciudad);
@@ -127,15 +141,24 @@ async registrarDireccion(calle, numero, descripcion, nombreCiudad, nombreProvinc
 },
 
 //asociar el envío al pedido con dirección y costo
-async asociarEnvio(id_pedido, id_tipo_envio, calle, numero, descripcion, nombreCiudad, nombreProvincia, transaction) {
-//calcular costo 
+async asociarEnvio(id_pedido, id_tipo_envio, calle, numero, descripcion, nombreCiudad, codigoPostal, nombreProvincia, transaction) {
+    //verificar que el pedido no tenga ya un envío registrado (evita duplicados)
+    const reqCheck = new sql.Request(transaction);
+    const yaExiste = await reqCheck
+    .input("id_pedido_check", sql.Int, id_pedido)
+    .query("SELECT id_envio FROM Envio WHERE id_pedido = @id_pedido_check");
+    if (yaExiste.recordset[0]) {
+    throw new Error("Este pedido ya tiene un envío registrado");
+}
+//calcular costo desde la tabla Tipo_envio
 const costo = await envioService.calcularCostoEnvio(id_tipo_envio);
-//registrar la dirección resolviendo provincia y ciudad por nombre
+//registrar la dirección normalizando provincia y ciudad
 const id_direccion = await envioService.registrarDireccion(
     calle,
     numero,
     descripcion,
     nombreCiudad,
+    codigoPostal,
     nombreProvincia,
     transaction
     );
@@ -171,6 +194,7 @@ const result = await pool
                 d.numero,
                 d.descripcion AS referencia,
                 c.nombre AS ciudad,
+                c.codigo_postal,
                 p.nombre AS provincia
             FROM Envio e
             INNER JOIN Tipo_envio t ON e.id_tipo_envio = t.id_tipo_envio

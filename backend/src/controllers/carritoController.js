@@ -53,7 +53,7 @@ const carritoController = {
       res.json({
         id_carrito: carrito.id_carrito,
         items,
-        subtotal: carrito.subtotal,
+        subtotal: carrito.total_carrito,
       });
     } catch (err) {
       res.status(500).json({ error: err.message });

@@ -47,23 +47,26 @@ asociarEnvio: async (req, res) => {
     numero,
     descripcion,
     ciudad,
+    codigo_postal,
     provincia,
     } = req.body;
     const pool = await poolPromise;
     const transaction = new sql.Transaction(pool);
     try {
-    await transaction.begin();
-    const { costo, id_direccion } = await envioService.asociarEnvio(
+await transaction.begin();
+
+const { costo, id_direccion } = await envioService.asociarEnvio(
         id_pedido,
         id_tipo_envio,
         calle,
         numero,
         descripcion,
         ciudad,
+        codigo_postal,
         provincia,
         transaction
     );
-    await transaction.commit();
+await transaction.commit();
     res.json({ mensaje: "Envío registrado con éxito", costo, id_direccion });
     } catch (err) {
     await transaction.rollback();
