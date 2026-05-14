@@ -43,7 +43,7 @@ const carritoService = {
       .request()
       .input("id_cliente", sql.Int, id_cliente)
       .query(`
-        SELECT id_carrito, subtotal
+        SELECT id_carrito, total_carrito
         FROM Carrito
         WHERE id_cliente = @id_cliente
         AND id_estado_carrito = 1
@@ -82,7 +82,7 @@ const carritoService = {
       .input("id_c", sql.Int, id_carrito)
       .query(`
         UPDATE Carrito
-        SET subtotal = ISNULL(
+        SET total_carrito = ISNULL(
           (
             SELECT SUM(cantidad * precio)
             FROM Item_carrito
@@ -110,7 +110,7 @@ const carritoService = {
           INSERT INTO Carrito
           (
             fecha_creacion,
-            subtotal,
+            total_carrito,
             id_estado_carrito,
             id_cliente
           )
@@ -187,7 +187,7 @@ const carritoService = {
       .request()
       .input("id_c", sql.Int, id_carrito)
       .query(`
-        SELECT subtotal
+        SELECT total_carrito
         FROM Carrito
         WHERE id_carrito = @id_c
       `);

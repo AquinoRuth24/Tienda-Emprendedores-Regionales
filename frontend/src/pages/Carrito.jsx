@@ -34,26 +34,26 @@ useEffect(() => {
         body: JSON.stringify({ id_item_carrito, id_carrito: idCarrito })
       });
       if (res.ok) {
-        cargarCarrito(); // Recargamos para actualizar el total y la lista
+        cargarCarrito(); //Recargamos para actualizar el total y la lista
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
     }
   };
   const cambiarCantidad = async (item, nuevaCantidad) => {
-    // 1. Validamos que no supere el stock
+//Validamos que no supere el stock
     if (nuevaCantidad > item.stock) {
       alert(`¡Ups! Solo hay ${item.stock} unidades disponibles de ${item.nombre}.`);
       return;
     }
 
-    // 2. Si baja a 0, reutilizamos tu función de eliminar
+//Si baja a 0 lo eliminamos directamente para evitar items con cantidad 0
     if (nuevaCantidad === 0) {
       eliminarItem(item.id_item_carrito);
       return;
     }
 
-    // 3. Si todo está bien, mandamos la actualización al backend
+// Si todo está bien actualiza la cantidad en el backend
     try {
       const res = await fetch('http://localhost:3001/api/carrito/actualizar', {
         method: 'POST',
@@ -65,7 +65,7 @@ useEffect(() => {
         })
       });
       if (res.ok) {
-        cargarCarrito(); // Recargamos para que se actualice la pantalla
+        cargarCarrito(); //Recargamos para que se actualice la pantalla
       }
     } catch (error) {
       console.error("Error al actualizar cantidad:", error);
@@ -82,7 +82,7 @@ const finalizarCompra = async () => {
     const data = await res.json();
     if (res.ok) {
       alert("¡Compra realizada con éxito!");
-      navigate("/inicio");
+      navigate("/envio", { state: { id_pedido: data.id_pedido, subtotal } }); //redirige a la pagina de envios
     } else {
       alert(data.error || "No hay stock suficiente de uno o más productos");
     }
@@ -146,7 +146,7 @@ const finalizarCompra = async () => {
               <hr />
               <h2>Total: ${subtotal}</h2>
               <button style={estilos.btnFinalizar} onClick={finalizarCompra}>
-                 Finalizar Compra
+                Finalizar Compra
               </button>
             </div>
           </div>

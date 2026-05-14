@@ -3,6 +3,8 @@ import Login from './pages/Login'
 import Registro from './pages/Registro'
 import Inicio from './pages/Inicio'
 import Carrito from './pages/Carrito';
+import Envio from "./pages/Envio";
+
 function App() {
   return (
     <Routes>
@@ -11,6 +13,7 @@ function App() {
       <Route path="/registro" element={<Registro />} />
         <Route path="/inicio" element={<Inicio />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/envio" element={<Envio />} />
     </Routes>
   )
 }
