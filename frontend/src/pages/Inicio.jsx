@@ -117,6 +117,9 @@ const agregarAlCarrito = async (producto) => {
           <button style={estilos.btnNav} onClick={() => navigate("/carrito")}>
             Carrito
           </button>
+          <button style={estilos.btnNav} onClick={() => navigate("/mis-pedidos")}>
+            Mis Pedidos
+          </button>
           <button style={estilos.btnNav} onClick={() => navigate("/facturas")}>
             Facturas
           </button>

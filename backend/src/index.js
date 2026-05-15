@@ -23,6 +23,8 @@ app.use('/api/carrito', require('./routes/carritoRoutes'));//se define la ruta p
 
 app.use('/api/envio', require('./routes/envioRoutes'));//se define la ruta para el manejo de envios
 
+app.use('/api/pedidos', require('./routes/pedidoRoutes'));//se define la ruta para el menejo de los pedidos
+
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' });
 });

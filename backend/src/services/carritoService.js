@@ -338,7 +338,8 @@ const carritoService = {
       await carritoService.validarStockProductos(id_carrito, transaction);
       await carritoService.actualizarStock(items, transaction);
 
-      const subtotal = await carritoService.calcularSubtotal(id_carrito);
+      const carritoActivo = await carritoService.obtenerCarritoActivo(id_carrito);
+      const subtotal = carritoActivo?.total_carrito ?? 0;
 
       const id_pedido = await carritoService.crearPedido(
         id_cliente, id_carrito, transaction
