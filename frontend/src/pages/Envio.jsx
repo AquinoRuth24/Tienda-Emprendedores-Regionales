@@ -4,7 +4,16 @@ import { useNavigate, useLocation } from "react-router-dom";
 function Envio() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id_pedido, subtotal } = location.state || {};
+  const fromState = location.state;
+
+  useEffect(() => {
+  if (fromState?.id_carrito) {
+    sessionStorage.setItem("envio_state", JSON.stringify(fromState));
+  }
+}, [fromState]);//guarda el estado del carrito para mantenerlo al volver desde el proceso de envio o al actualizar la pagina 
+const envioData = fromState || JSON.parse(sessionStorage.getItem("envio_state") || "{}");
+const { id_carrito, id_cliente, subtotal } = envioData;
+
   //paso: "seleccion","domicilio","confirmacion"
   const [paso, setPaso] = useState("seleccion");
   //métodos de envío cargados desde la BD
@@ -93,31 +102,44 @@ function Envio() {
     return true;
   };
 
-  //****************Retiro en el Local*************/
-
-  const confirmarRetiro = async () => {
-    if (cargando) return; // evita doble clic
-    setCargando(true);
-    try {
-      const res = await fetch("http://localhost:3001/api/envio/retiro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_pedido }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.mensaje);
-        navigate("/inicio");
-      } else {
-        alert(data.error || "Error al registrar retiro");
-      }
-    } catch (error) {
-      alert("No se pudo conectar con el servidor. Intentá nuevamente.");
-      console.error("Error al registrar retiro:", error);
-    } finally {
-      setCargando(false);
+  const confirmarCompra = async (datosEnvio) => {
+  if (cargando) return;
+  setCargando(true);
+  try {
+    const res = await fetch("http://localhost:3001/api/carrito/finalizar-con-envio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_carrito, id_cliente, datosEnvio }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      sessionStorage.removeItem("envio_state");
+      alert("¡Compra realizada con éxito!");
+      navigate("/inicio");
+    } else {
+      alert(data.error || "Error al procesar la compra");
     }
-  };
+  } catch (error) {
+    alert("No se pudo conectar con el servidor. Intentá nuevamente.");
+    console.error(error);
+  } finally {
+    setCargando(false);
+  }
+};
+
+//****************Retiro en el Local*************/
+const confirmarRetiro = () => confirmarCompra({ tipo: "retiro" });
+
+//Al confirmar envio a domicilio
+const confirmarEnvio = () => confirmarCompra({
+  tipo: "domicilio",
+  id_tipo_envio: ID_DOMICILIO,
+  calle: form.calle.trim(),
+  numero: parseInt(form.numero),
+  descripcion: form.descripcion.trim() || null,
+  ciudad: form.ciudad.trim(),
+  provincia: form.provincia.trim(),
+});
 
   //****************Envio a domicilio*************/
 
@@ -149,42 +171,8 @@ function Envio() {
     if (validarFormulario()) calcularCosto();
   };
 
-  const confirmarEnvio = async () => {
-    if (cargando) return; // evita doble clic
-    setCargando(true);
-    try {
-      const res = await fetch("http://localhost:3001/api/envio/asociar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_pedido,
-          id_tipo_envio: ID_DOMICILIO,
-          calle: form.calle.trim(),
-          numero: parseInt(form.numero),
-          descripcion: form.descripcion.trim() || null,
-          ciudad: form.ciudad.trim(),
-          codigo_postal: parseInt(form.codigo_postal) || 0,
-          provincia: form.provincia.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("¡Envío registrado con éxito!");
-        navigate("/inicio");
-      } else {
-        alert(data.error || "Error al registrar envío");
-      }
-    } catch (error) {
-      alert("No se pudo conectar con el servidor. Intentá nuevamente.");
-      console.error("Error al confirmar envío:", error);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  //sin pedido activo
-
-  if (!id_pedido) {
+  //Chequea el carrito en vez del pedido
+  if (!id_carrito) {
     return (
       <div style={estilos.pagina}>
         <nav style={estilos.navbar}>
@@ -192,15 +180,12 @@ function Envio() {
         </nav>
         <div style={{ padding: "80px", textAlign: "center" }}>
           <h3 style={{ color: "#555", marginBottom: "16px" }}>
-            No hay un pedido activo para gestionar el envío.
+            No hay un carrito activo para gestionar el envío.
           </h3>
           <p style={{ color: "#888", marginBottom: "24px" }}>
-            Primero realizá una compra desde el carrito.
+            Primero agregá productos desde la tienda.
           </p>
-          <button
-            style={estilos.btnFinalizar}
-            onClick={() => navigate("/carrito")}
-          >
+          <button style={estilos.btnFinalizar} onClick={() => navigate("/carrito")}>
             Ir al carrito
           </button>
         </div>

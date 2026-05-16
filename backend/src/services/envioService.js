@@ -13,8 +13,9 @@ async obtenerMetodosEnvio() {
 //*************Retiro en el local********************/
 
 //registra la modalidad de retiro en el pedido
-async registrarModalidadRetiro(id_pedido) {
+async registrarModalidadRetiro(id_pedido, transaction = null) {
 const pool = await poolPromise;
+const req = transaction ? new sql.Request(transaction) : pool.request();
 //verificar que el pedido existe
 const pedido = await pool
     .request()

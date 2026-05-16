@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback  } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Carrito() {
@@ -7,24 +7,32 @@ function Carrito() {
   const [idCarrito, setIdCarrito] = useState(null);
   const navigate = useNavigate();
 
-  const cliente = JSON.parse(localStorage.getItem("cliente"));
-  const id_cliente = cliente?.id || 1; // Usamos el ID del cliente logueado
+const cliente = JSON.parse(localStorage.getItem("cliente"));
+const id_cliente = cliente?.id; 
 
-  const cargarCarrito = async () => {
-    try {
-      const res = await fetch(`http://localhost:3001/api/carrito/${id_cliente}`);
-      const data = await res.json();
-      setItems(data.items || []);
-      setSubtotal(data.subtotal || 0);
-      setIdCarrito(data.id_carrito);
-    } catch (error) {
-      console.error("Error al cargar carrito:", error);
-    }
-  };
-  
 useEffect(() => {
-    cargarCarrito();
-  }, );
+  if (!id_cliente) {
+    navigate("/login");
+    return;
+  }
+  cargarCarrito();
+}, [id_cliente, cargarCarrito, navigate]);//cargar carrito con los datos del cliente
+
+  const cargarCarrito = useCallback(async () => {
+  try {
+    const res = await fetch(`http://localhost:3001/api/carrito/${id_cliente}`);
+    const data = await res.json();
+    setItems(data.items || []);
+    setSubtotal(data.subtotal || 0);
+    setIdCarrito(data.id_carrito);
+  } catch (error) {
+    console.error("Error al cargar carrito:", error);
+  }
+}, [id_cliente]);
+
+useEffect(() => {
+  cargarCarrito();
+}, [cargarCarrito]);
 
   const eliminarItem = async (id_item_carrito) => {
     try {
@@ -71,25 +79,15 @@ useEffect(() => {
       console.error("Error al actualizar cantidad:", error);
     }
   };
-  
-const finalizarCompra = async () => {
-  try {
-    const res = await fetch('http://localhost:3001/api/carrito/finalizar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_carrito: idCarrito, id_cliente, total: subtotal })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert("¡Compra realizada con éxito!");
-      navigate("/envio", { state: { id_pedido: data.id_pedido, subtotal } }); //redirige a la pagina de envios
-    } else {
-      alert(data.error || "No hay stock suficiente de uno o más productos");
+//solo redirige a la pantalla de envio, el proceso de compra se finaliza ahi
+const irAEnvio = () => {
+    if (!idCarrito || items.length === 0) {
+      alert("Tu carrito está vacío");
+      return;
     }
-  } catch (error) {
-    console.error("Error al finalizar:", error);
-  }
-};
+    navigate("/envio", { state: { id_carrito: idCarrito, id_cliente, subtotal } });
+  };
+
 
   return (
     <div style={estilos.pagina}>
@@ -145,7 +143,7 @@ const finalizarCompra = async () => {
               <h3>Resumen de Compra</h3>
               <hr />
               <h2>Total: ${subtotal}</h2>
-              <button style={estilos.btnFinalizar} onClick={finalizarCompra}>
+              <button style={estilos.btnFinalizar} onClick={irAEnvio}>
                 Finalizar Compra
               </button>
             </div>

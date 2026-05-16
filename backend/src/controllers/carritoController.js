@@ -85,6 +85,18 @@ const carritoController = {
       res.status(400).json({ error: err.message });
     }
   },
+//finalizar la compra y registrar el envio
+finalizarCompraConEnvio: async (req, res) => {
+  const { id_carrito, id_cliente, datosEnvio } = req.body;
+  try {
+    const resultado = await carritoService.finalizarCompraConEnvio(
+      id_carrito, id_cliente, datosEnvio
+    );
+    res.json(resultado);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+},
 };
 
 module.exports = carritoController;

@@ -8,16 +8,22 @@ function Inicio() {
   const [emprendedores, setEmprendedores] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [emprendedorSeleccionado, setEmprendedorSeleccionado] = useState(null);
+  const [cargando, setCargando] = useState(true);
   const navigate = useNavigate();
 
   // Obtener cliente del localStorage
   const cliente = JSON.parse(localStorage.getItem("cliente"));
+  const id_cliente = cliente?.id;
 
   useEffect(() => {
+    if (!id_cliente) {
+      navigate("/login");
+      return;
+    }
     cargarProductos();
     cargarCategorias();
     cargarEmprendedores();
-  }, []);
+  }, [id_cliente, navigate]);
   //cargar emprendedores para el filtro
   const cargarEmprendedores = async () => {
     try {
@@ -31,11 +37,14 @@ function Inicio() {
   };
   //cargar productos sin filtro
   const cargarProductos = async () => {
+    setCargando(true); //activa el spinner al empezar
     try {
       const res = await axios.get("http://localhost:3001/api/productos");
       setProductos(res.data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setCargando(false); //desactiva el spinner siempre al terminar
     }
   };
   //cargar categorias para el filtro
@@ -88,24 +97,28 @@ function Inicio() {
     navigate("/login");
   };
   //agregar al carrito
-const agregarAlCarrito = async (producto) => {
-  const id_cliente = cliente?.id || 1;
-  try {
-    const res = await fetch('http://localhost:3001/api/carrito/agregar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_cliente, id_producto: producto.id_producto, cantidad: 1, precio: producto.precio })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert(`¡${producto.nombre} agregado al carrito con éxito!`);
-    } else {
-      alert(data.error || "Stock insuficiente, no se pudo agregar");
+  const agregarAlCarrito = async (producto) => {
+    try {
+      const res = await fetch("http://localhost:3001/api/carrito/agregar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_cliente,
+          id_producto: producto.id_producto,
+          cantidad: 1,
+          precio: producto.precio,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`¡${producto.nombre} agregado al carrito con éxito!`);
+      } else {
+        alert(data.error || "Stock insuficiente, no se pudo agregar");
+      }
+    } catch (error) {
+      console.error("Error de conexión:", error);
     }
-  } catch (error) {
-    console.error("Error de conexión:", error);
-  }
-};
+  };
 
   return (
     <div style={estilos.pagina}>
@@ -117,7 +130,10 @@ const agregarAlCarrito = async (producto) => {
           <button style={estilos.btnNav} onClick={() => navigate("/carrito")}>
             Carrito
           </button>
-          <button style={estilos.btnNav} onClick={() => navigate("/mis-pedidos")}>
+          <button
+            style={estilos.btnNav}
+            onClick={() => navigate("/mis-pedidos")}
+          >
             Mis Pedidos
           </button>
           <button style={estilos.btnNav} onClick={() => navigate("/facturas")}>
@@ -194,51 +210,56 @@ const agregarAlCarrito = async (producto) => {
                 : "Todos los productos"}
           </h2>
 
-          <div style={estilos.grilla}>
-            {productos.length === 0 ? (
-              <p>No hay productos disponibles.</p>
-            ) : (
-              productos.map((producto) => {
-  console.log('Producto:', producto.nombre, '| imagen:', producto.imagen);
-  return (
-    <div key={producto.id_producto} style={estilos.tarjeta}>
+          {/* ✅ Indicador de carga */}
+          {cargando ? (
+            <div style={estilos.cargando}>
+              <p style={estilos.textoCargando}>Cargando productos...</p>
+            </div>
+          ) : productos.length === 0 ? (
+            <p style={{ color: "#666" }}>No hay productos disponibles.</p>
+          ) : (
+            <div style={estilos.grilla}>
+              {productos.map((producto) => (
+                <div key={producto.id_producto} style={estilos.tarjeta}>
                   {producto.imagen ? (
                     <img
                       src={`http://localhost:3001/uploads/${producto.imagen}`}
                       alt={producto.nombre}
                       style={estilos.imagen}
-                      onError={(e) =>
-                        console.log("Error cargando imagen:", e.target.src)
-                      }
                     />
                   ) : (
                     <div style={estilos.imagenPlaceholder}>🛍️</div>
                   )}
                   <h3 style={estilos.nombreProducto}>{producto.nombre}</h3>
                   <p style={estilos.descripcion}>{producto.descripcion}</p>
-                  <p style={estilos.categoria}> {producto.categoria}</p>
-                  <p style={estilos.precio}>${producto.precio}</p>
+                  <p style={estilos.categoria}>{producto.categoria}</p>
+                  <p style={estilos.precio}>
+                    ${producto.precio.toLocaleString("es-AR")}
+                  </p>
                   <p style={estilos.stock}>Stock: {producto.stock}</p>
                   {producto.stock > 0 ? (
-                    <button 
-                      style={estilos.btnAgregar} 
+                    <button
+                      style={estilos.btnAgregar}
                       onClick={() => agregarAlCarrito(producto)}
                     >
                       Agregar al carrito
                     </button>
                   ) : (
-                    <button 
-                      style={{ ...estilos.btnAgregar, backgroundColor: "#b0bec5", cursor: "not-allowed" }} 
+                    <button
+                      style={{
+                        ...estilos.btnAgregar,
+                        backgroundColor: "#b0bec5",
+                        cursor: "not-allowed",
+                      }}
                       disabled
                     >
                       Sin stock
                     </button>
                   )}
                 </div>
-                ); // ← cerrás el return
-    })
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -408,6 +429,16 @@ const estilos = {
     cursor: "pointer",
     fontSize: "13px",
     marginTop: "5px",
+  },
+  cargando: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "200px",
+  },
+  textoCargando: {
+    color: "#6b7280",
+    fontSize: "1rem",
   },
 };
 

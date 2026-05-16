@@ -7,4 +7,5 @@ router.post('/eliminar', carritoController.eliminarItem);
 router.post('/actualizar', carritoController.actualizarCantidad);
 router.post('/finalizar', carritoController.finalizarCompra);
 router.get('/:id_cliente', carritoController.obtenerCarrito);
+router.post('/finalizar-con-envio', carritoController.finalizarCompraConEnvio);
 module.exports = router;

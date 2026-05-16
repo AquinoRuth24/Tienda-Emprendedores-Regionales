@@ -85,7 +85,7 @@ export default function MisPedidos() {
           <div style={estilos.lista}>
             {pedidos.map((pedido) => (
               <div key={pedido.id_pedido} style={estilos.tarjeta}>
-                {/* Encabezado*/}
+                {/* Encabezado */}
                 <div
                   style={estilos.encabezado}
                   onClick={() =>
@@ -97,6 +97,12 @@ export default function MisPedidos() {
                   }
                 >
                   <div>
+                    {/* Comprobante arriba y grande */}
+                    {pedido.nro_comprobante && (
+                      <p style={estilos.nroComprobante}>
+                        {pedido.nro_comprobante}
+                      </p>
+                    )}
                     <p style={estilos.idPedido}>Pedido #{pedido.id_pedido}</p>
                     <p style={estilos.fecha}>
                       {new Date(pedido.fecha_pedido).toLocaleDateString(
@@ -143,46 +149,46 @@ export default function MisPedidos() {
                             </span>
                           </div>
                         ))}
+                        {/* Envío como fila dentro de la misma lista */}
+                        <div style={estilos.filaProd}>
+                          <span>
+                            {pedido.tipo_envio || "Envío"}
+                            {pedido.calle
+                              ? ` — ${pedido.calle} ${pedido.numero}, ${pedido.ciudad}, ${pedido.provincia}`
+                              : pedido.referencia
+                                ? ` — Ref: ${pedido.referencia}`
+                                : ""}
+                          </span>
+                          <span style={estilos.subtotalProd}>
+                            $
+                            {pedido.costo_envio?.toLocaleString("es-AR") ?? "0"}
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Envío */}
+                    {/* Estado del envío */}
                     <div style={estilos.seccion}>
-                      <p style={estilos.tituloSeccion}>Envío</p>
+                      <p style={estilos.tituloSeccion}>Estado del envío</p>
                       <p style={estilos.textoInfo}>
-                        <strong>Tipo:</strong> {pedido.tipo_envio || "—"}
-                      </p>
-                      <p style={estilos.textoInfo}>
-                        <strong>Estado del envío:</strong>{" "}
                         {pedido.estado_envio || "—"}
-                      </p>
-                      {pedido.calle && (
-                        <p style={estilos.textoInfo}>
-                          <strong>Dirección:</strong> {pedido.calle}{" "}
-                          {pedido.numero}, {pedido.ciudad}, {pedido.provincia}
-                        </p>
-                      )}
-                      <p style={estilos.textoInfo}>
-                        <strong>Costo de envío:</strong> $
-                        {pedido.costo_envio?.toLocaleString("es-AR") ?? "0"}
                       </p>
                     </div>
 
                     {/* Total */}
-                    {pedido.total && (
+                    {pedido.productos?.length > 0 && (
                       <div style={estilos.filaTotal}>
                         <span style={estilos.labelTotal}>Total</span>
                         <span style={estilos.valorTotal}>
-                          ${pedido.total?.toLocaleString("es-AR")}
+                          $
+                          {(
+                            (pedido.productos?.reduce(
+                              (acc, p) => acc + (p.subtotal ?? 0),
+                              0,
+                            ) ?? 0) + (pedido.costo_envio ?? 0)
+                          ).toLocaleString("es-AR")}
                         </span>
                       </div>
-                    )}
-
-                    {/* Comprobante */}
-                    {pedido.nro_comprobante && (
-                      <p style={estilos.comprobante}>
-                        Comprobante: {pedido.nro_comprobante}
-                      </p>
                     )}
                   </div>
                 )}
@@ -363,5 +369,11 @@ const estilos = {
     color: "#94a3b8",
     fontSize: "11px",
     marginTop: "0.5rem",
+  },
+  nroComprobante: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#4ab8d8",
+    margin: "0 0 2px 0",
   },
 };
