@@ -7,6 +7,7 @@ require('./config/db');
 
 const clienteRoutes = require('./routes/clienteRoutes');
 const productoRoutes = require('./routes/productoRoutes');
+const verificarToken = require('./middlewares/authMiddleware');
 
 const app = express();
 app.use(cors());
@@ -14,16 +15,16 @@ app.use(express.json());
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-//Rutas
-app.use('/api/cliente', clienteRoutes);//se define la ruta para el manejo de autentificacion de clientes.
+// Rutas públicas sin token
+app.use('/api/cliente', clienteRoutes);//registro, login, logout
+app.use('/api/productos', productoRoutes);//listado de productos para mostrar en el frontend, no requiere autenticacion
 
-app.use('/api/productos', productoRoutes);//se define la ruta para el manejo de productos
+//Rutas protegidas (requieren token)
+app.use('/api/carrito', verificarToken, require('./routes/carritoRoutes'));//definir la ruta del  carrito
+app.use('/api/envio', verificarToken, require('./routes/envioRoutes'));//definir la ruta de la  direccion de envio
+app.use('/api/pedidos', verificarToken, require('./routes/pedidoRoutes'));//definir la ruta de los pedidos
+//app.use('/api/factura', verificarToken, require('./routes/facturaRoutes'));//definir la ruta de las facturas
 
-app.use('/api/carrito', require('./routes/carritoRoutes'));//se define la ruta para el manejo del carrito
-
-app.use('/api/envio', require('./routes/envioRoutes'));//se define la ruta para el manejo de envios
-
-app.use('/api/pedidos', require('./routes/pedidoRoutes'));//se define la ruta para el menejo de los pedidos
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' });

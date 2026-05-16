@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback  } from "react";
 import { useNavigate } from "react-router-dom";
+import fetchConToken from "../utils/fetchConToken";
 
 function Carrito() {
   const [items, setItems] = useState([]);
@@ -20,7 +21,7 @@ useEffect(() => {
 
   const cargarCarrito = useCallback(async () => {
   try {
-    const res = await fetch(`http://localhost:3001/api/carrito/${id_cliente}`);
+    const res = await fetchConToken(`http://localhost:3001/api/carrito/${id_cliente}`);
     const data = await res.json();
     setItems(data.items || []);
     setSubtotal(data.subtotal || 0);
@@ -36,7 +37,7 @@ useEffect(() => {
 
   const eliminarItem = async (id_item_carrito) => {
     try {
-      const res = await fetch('http://localhost:3001/api/carrito/eliminar', {
+      const res = await fetchConToken('http://localhost:3001/api/carrito/eliminar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_item_carrito, id_carrito: idCarrito })
@@ -63,7 +64,7 @@ useEffect(() => {
 
 // Si todo está bien actualiza la cantidad en el backend
     try {
-      const res = await fetch('http://localhost:3001/api/carrito/actualizar', {
+      const res = await fetchConToken('http://localhost:3001/api/carrito/actualizar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

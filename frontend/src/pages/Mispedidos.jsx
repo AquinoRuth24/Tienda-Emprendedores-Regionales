@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import fetchConToken from "../utils/fetchConToken";
 
 export default function MisPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -18,7 +19,7 @@ export default function MisPedidos() {
     //cargar pedidos del clinte
     const cargarPedidos = async () => {
       try {
-        const res = await fetch(
+        const res = await fetchConToken(
           `http://localhost:3001/api/pedidos/${id_cliente}`,
         );
         const data = await res.json();

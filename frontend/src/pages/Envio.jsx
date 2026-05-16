@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import fetchConToken from "../utils/fetchConToken";
 
 function Envio() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const { id_carrito, id_cliente, subtotal } = envioData;
   useEffect(() => {
     const cargarMetodos = async () => {
       try {
-        const res = await fetch("http://localhost:3001/api/envio/metodos");
+        const res = await fetchConToken("http://localhost:3001/api/envio/metodos");
         const data = await res.json();
         if (res.ok) setMetodosEnvio(data);
       } catch (error) {
@@ -106,7 +107,7 @@ const { id_carrito, id_cliente, subtotal } = envioData;
   if (cargando) return;
   setCargando(true);
   try {
-    const res = await fetch("http://localhost:3001/api/carrito/finalizar-con-envio", {
+    const res = await fetchConToken("http://localhost:3001/api/carrito/finalizar-con-envio", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_carrito, id_cliente, datosEnvio }),
@@ -147,7 +148,7 @@ const confirmarEnvio = () => confirmarCompra({
     if (cargandoCosto) return; //evita doble clic
     setCargandoCosto(true);
     try {
-      const res = await fetch("http://localhost:3001/api/envio/calcular", {
+      const res = await fetchConToken("http://localhost:3001/api/envio/calcular", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_tipo_envio: ID_DOMICILIO }),
