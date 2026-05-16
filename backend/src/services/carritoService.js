@@ -229,18 +229,26 @@ const carritoService = {
 
   //actualizar stock de productos después de finalizar compra
   async actualizarStock(items, transaction) {
-    for (const item of items) {
-      const req = new sql.Request(transaction);
-      await req
-        .input("id_p", sql.Int, item.id_producto)
-        .input("cant", sql.Int, item.cantidad)
-        .query(`
-          UPDATE Producto
-          SET stock = stock - @cant
-          WHERE id_producto = @id_p
-        `);
+  for (const item of items) {
+    const req = new sql.Request(transaction);
+    const result = await req
+      .input("id_p", sql.Int, item.id_producto)
+      .input("cant", sql.Int, item.cantidad)
+      .query(`
+        UPDATE Producto
+        SET stock = stock - @cant
+        WHERE id_producto = @id_p
+        AND stock >= @cant  --solo descuenta si hay suficiente stock
+      `);
+
+    //Si no afectó ninguna fila, el stock no alcanzó
+    if (result.rowsAffected[0] === 0) {
+      throw new Error(
+        `Stock insuficiente para el producto ID ${item.id_producto}. Otro cliente lo compró al mismo tiempo.`
+      );
     }
-  },
+  }
+},
 
   //eliminar un item del carrito
   async eliminarItem(id_item_carrito, id_carrito) {
