@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "./Inicio.css"; 
 
 function Inicio() {
   const [productos, setProductos] = useState([]);
@@ -23,19 +24,22 @@ function Inicio() {
     cargarProductos();
     cargarCategorias();
     cargarEmprendedores();
+<<<<<<< Updated upstream
   }, [id_cliente, navigate]);
   //cargar emprendedores para el filtro
+=======
+  }, []);
+
+>>>>>>> Stashed changes
   const cargarEmprendedores = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:3001/api/productos/emprendedores",
-      );
+      const res = await axios.get("http://localhost:3001/api/productos/emprendedores");
       setEmprendedores(res.data);
     } catch (err) {
       console.error(err);
     }
   };
-  //cargar productos sin filtro
+
   const cargarProductos = async () => {
     setCargando(true); //activa el spinner al empezar
     try {
@@ -47,55 +51,50 @@ function Inicio() {
       setCargando(false); //desactiva el spinner siempre al terminar
     }
   };
-  //cargar categorias para el filtro
+
   const cargarCategorias = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:3001/api/productos/categorias",
-      );
+      const res = await axios.get("http://localhost:3001/api/productos/categorias");
       setCategorias(res.data);
     } catch (err) {
       console.error(err);
     }
   };
-  //filtrar por categoria
+
   const filtrarPorCategoria = async (id_categoria) => {
     setCategoriaSeleccionada(id_categoria);
     setEmprendedorSeleccionado(null);
     try {
-      const res = await axios.get(
-        `http://localhost:3001/api/productos/categoria/${id_categoria}`,
-      );
+      const res = await axios.get(`http://localhost:3001/api/productos/categoria/${id_categoria}`);
       setProductos(res.data);
     } catch (err) {
       console.error(err);
     }
   };
-  //filtrar por emprendedor
+
   const filtrarPorEmprendedor = async (id_usuario) => {
     setEmprendedorSeleccionado(id_usuario);
     setCategoriaSeleccionada(null);
     try {
-      const res = await axios.get(
-        `http://localhost:3001/api/productos/emprendedor/${id_usuario}`,
-      );
+      const res = await axios.get(`http://localhost:3001/api/productos/emprendedor/${id_usuario}`);
       setProductos(res.data);
     } catch (err) {
       console.error(err);
     }
   };
-  //limpiar filtros
+
   const limpiarFiltros = () => {
     setCategoriaSeleccionada(null);
     setEmprendedorSeleccionado(null);
     cargarProductos();
   };
-  //cerrar sesion
+
   const cerrarSesion = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("cliente");
     navigate("/login");
   };
+<<<<<<< Updated upstream
   //agregar al carrito
   const agregarAlCarrito = async (producto) => {
     try {
@@ -108,6 +107,16 @@ function Inicio() {
           cantidad: 1,
           precio: producto.precio,
         }),
+=======
+
+  const agregarAlCarrito = async (producto) => {
+    const id_cliente = cliente?.id || 1;
+    try {
+      const res = await fetch('http://localhost:3001/api/carrito/agregar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_cliente, id_producto: producto.id_producto, cantidad: 1, precio: producto.precio })
+>>>>>>> Stashed changes
       });
       const data = await res.json();
       if (res.ok) {
@@ -145,16 +154,46 @@ function Inicio() {
         </div>
       </nav>
 
+      {/*SECCIÓN DE BANNER Y CARDS*/}
+      <div className="seccion-destacada">
+        <div className="hero-banner">
+          <h1 className="hero-titulo">
+            <span className="fuente-elegante">Descubrí</span> lo mejor de<br/>
+            nuestros emprendedores
+          </h1>
+          <p className="hero-subtitulo">Calidad, diseño y producción 100% regional.</p>
+        </div>
+
+        <div className="info-cards-container">
+          <div className="info-card">
+            <div className="card-icono">🚚</div>
+            <h3>Envíos en Corrientes</h3>
+            <p>Llegamos a tu domicilio en Corrientes Capital de forma rápida y segura.</p>
+          </div>
+
+          <div className="info-card">
+            <div className="card-icono">🤝</div>
+            <h3>Trato Directo</h3>
+            <p>Comprá sin intermediarios apoyando la economía local.</p>
+          </div>
+
+          <div className="info-card">
+            <div className="card-icono">💳</div>
+            <h3>Pagos Seguros</h3>
+            <p>Múltiples opciones de pago al confirmar tu pedido.</p>
+          </div>
+        </div>
+      </div>
+      
+
       <div style={estilos.contenido}>
         {/* SIDEBAR IZQUIERDO */}
         <div style={estilos.sidebar}>
-          {/* Categorías */}
           <div style={estilos.seccionFiltro}>
             <h3 style={estilos.tituloFiltro}>Categorías</h3>
             <button
               style={
-                categoriaSeleccionada === null &&
-                emprendedorSeleccionado === null
+                categoriaSeleccionada === null && emprendedorSeleccionado === null
                   ? estilos.filtroActivo
                   : estilos.filtroBtn
               }
@@ -177,7 +216,6 @@ function Inicio() {
             ))}
           </div>
 
-          {/* Emprendedores */}
           <div style={estilos.seccionFiltro}>
             <h3 style={estilos.tituloFiltro}>Emprendedores</h3>
             {emprendedores.map((emp) => (
@@ -210,6 +248,7 @@ function Inicio() {
                 : "Todos los productos"}
           </h2>
 
+<<<<<<< Updated upstream
           {/* ✅ Indicador de carga */}
           {cargando ? (
             <div style={estilos.cargando}>
@@ -260,6 +299,52 @@ function Inicio() {
               ))}
             </div>
           )}
+=======
+          <div style={estilos.grilla}>
+            {productos.length === 0 ? (
+              <p>No hay productos disponibles.</p>
+            ) : (
+              productos.map((producto) => {
+                return (
+                  <div key={producto.id_producto} style={estilos.tarjeta}>
+                    {producto.imagen ? (
+                      <img
+                        src={`http://localhost:3001/uploads/${producto.imagen}`}
+                        alt={producto.nombre}
+                        style={estilos.imagen}
+                        onError={(e) =>
+                          console.log("Error cargando imagen:", e.target.src)
+                        }
+                      />
+                    ) : (
+                      <div style={estilos.imagenPlaceholder}>🛍️</div>
+                    )}
+                    <h3 style={estilos.nombreProducto}>{producto.nombre}</h3>
+                    <p style={estilos.descripcion}>{producto.descripcion}</p>
+                    <p style={estilos.categoria}> {producto.categoria}</p>
+                    <p style={estilos.precio}>${producto.precio}</p>
+                    <p style={estilos.stock}>Stock: {producto.stock}</p>
+                    {producto.stock > 0 ? (
+                      <button 
+                        style={estilos.btnAgregar} 
+                        onClick={() => agregarAlCarrito(producto)}
+                      >
+                        Agregar al carrito
+                      </button>
+                    ) : (
+                      <button 
+                        style={{ ...estilos.btnAgregar, backgroundColor: "#b0bec5", cursor: "not-allowed" }} 
+                        disabled
+                      >
+                        Sin stock
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+>>>>>>> Stashed changes
         </div>
       </div>
     </div>
