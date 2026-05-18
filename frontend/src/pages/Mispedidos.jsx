@@ -106,15 +106,15 @@ export default function MisPedidos() {
                     )}
                     <p style={estilos.idPedido}>Pedido #{pedido.id_pedido}</p>
                     <p style={estilos.fecha}>
-                      {new Date(pedido.fecha_pedido).toLocaleDateString(
-                        "es-AR",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
-                    </p>
+                    {(() => {
+                    const [anio, mes, dia] = pedido.fecha_pedido.split("T")[0].split("-");
+                      return new Date(anio, mes - 1, dia).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        });
+                  })()}
+                  </p>
                   </div>
                   <div style={estilos.encabezadoDerecha}>
                     <span

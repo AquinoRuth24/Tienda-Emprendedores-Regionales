@@ -140,11 +140,14 @@ return (
                     </p>
                     <p style={estilos.idFactura}>Pedido #{factura.id_pedido}</p>
                     <p style={estilos.fecha}>
-                    {new Date(factura.fecha).toLocaleDateString("es-AR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                    })}
+                    {(() => {
+                    const [anio, mes, dia] = factura.fecha.split("T")[0].split("-");
+                        return new Date(anio, mes - 1, dia).toLocaleDateString("es-AR", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                            });
+                    })()}
                     </p>
                 </div>
                 <div style={estilos.encabezadoDerecha}>
@@ -251,7 +254,7 @@ return (
                     </div>
                     )}
                     {factura.estado_pedido === "Pagado" && (
-                    <div style={estilos.pagadoBadge}>✅ Pago registrado</div>
+                    <div style={estilos.pagadoBadge}>Pago registrado</div>
                     )}
                 </div>
                 )}

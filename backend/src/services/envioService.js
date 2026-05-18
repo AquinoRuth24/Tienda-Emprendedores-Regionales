@@ -13,36 +13,34 @@ async obtenerMetodosEnvio() {
 //*************Retiro en el local********************/
 
 //registra la modalidad de retiro en el pedido
-async registrarModalidadRetiro(id_pedido, transaction = null) {
-const pool = await poolPromise;
-const req = transaction ? new sql.Request(transaction) : pool.request();
-//verificar que el pedido existe
-const pedido = await pool
-    .request()
+async registrarModalidadRetiro(id_pedido, transaction) {
+const reqVerificar = new sql.Request(transaction);
+const pedido = await reqVerificar
     .input("id_pedido", sql.Int, id_pedido)
     .query("SELECT id_pedido FROM Pedido WHERE id_pedido = @id_pedido");
 
-    if (!pedido.recordset[0]) {
+if (!pedido.recordset[0]) {
     throw new Error("Pedido no encontrado");
-    }
-//verificar que el pedido no tenga ya un envío registrado
-const yaExiste = await pool
-    .request()
+}
+//verificar que el pedido no tenga ya un envio registrado
+const reqCheck = new sql.Request(transaction);
+const yaExiste = await reqCheck
     .input("id_pedido_check", sql.Int, id_pedido)
     .query("SELECT id_envio FROM Envio WHERE id_pedido = @id_pedido_check");
-    if (yaExiste.recordset[0]) {
+
+if (yaExiste.recordset[0]) {
     throw new Error("Este pedido ya tiene un envío registrado");
-    }
-//calcular fecha estimada de entrega costo 0, fecha estimada el mismo día
-await pool
-    .request()
+}
+//registrar el retiro en el local con costo 0 
+const reqInsert = new sql.Request(transaction);
+await reqInsert
     .input("id_pedido", sql.Int, id_pedido)
     .query(`INSERT INTO Envio 
-                (fecha_envio, fecha_estimada_entrega, costo_envio, id_estado_envio, id_direccion, id_tipo_envio, id_pedido)
-            VALUES 
-                (GETDATE(), GETDATE(), 0, 1, NULL,
-                (SELECT id_tipo_envio FROM Tipo_envio WHERE descripcion = 'Retiro en local'),
-                @id_pedido)`);
+    (fecha_envio, fecha_estimada_entrega, costo_envio, id_estado_envio, id_direccion, id_tipo_envio, id_pedido)
+    VALUES 
+    (GETDATE(), GETDATE(), 0, 1, NULL,
+    (SELECT id_tipo_envio FROM Tipo_envio WHERE descripcion = 'Retiro en local'),
+    @id_pedido)`);
 },
 
 //****************Envio a domicilio*************/
