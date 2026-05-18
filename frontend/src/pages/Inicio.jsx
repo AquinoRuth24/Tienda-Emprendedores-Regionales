@@ -24,13 +24,8 @@ function Inicio() {
     cargarProductos();
     cargarCategorias();
     cargarEmprendedores();
-<<<<<<< Updated upstream
   }, [id_cliente, navigate]);
   //cargar emprendedores para el filtro
-=======
-  }, []);
-
->>>>>>> Stashed changes
   const cargarEmprendedores = async () => {
     try {
       const res = await axios.get("http://localhost:3001/api/productos/emprendedores");
@@ -94,7 +89,6 @@ function Inicio() {
     localStorage.removeItem("cliente");
     navigate("/login");
   };
-<<<<<<< Updated upstream
   //agregar al carrito
   const agregarAlCarrito = async (producto) => {
     try {
@@ -107,16 +101,6 @@ function Inicio() {
           cantidad: 1,
           precio: producto.precio,
         }),
-=======
-
-  const agregarAlCarrito = async (producto) => {
-    const id_cliente = cliente?.id || 1;
-    try {
-      const res = await fetch('http://localhost:3001/api/carrito/agregar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_cliente, id_producto: producto.id_producto, cantidad: 1, precio: producto.precio })
->>>>>>> Stashed changes
       });
       const data = await res.json();
       if (res.ok) {
@@ -248,8 +232,7 @@ function Inicio() {
                 : "Todos los productos"}
           </h2>
 
-<<<<<<< Updated upstream
-          {/* ✅ Indicador de carga */}
+          {/*Indicador de carga */}
           {cargando ? (
             <div style={estilos.cargando}>
               <p style={estilos.textoCargando}>Cargando productos...</p>
@@ -299,52 +282,6 @@ function Inicio() {
               ))}
             </div>
           )}
-=======
-          <div style={estilos.grilla}>
-            {productos.length === 0 ? (
-              <p>No hay productos disponibles.</p>
-            ) : (
-              productos.map((producto) => {
-                return (
-                  <div key={producto.id_producto} style={estilos.tarjeta}>
-                    {producto.imagen ? (
-                      <img
-                        src={`http://localhost:3001/uploads/${producto.imagen}`}
-                        alt={producto.nombre}
-                        style={estilos.imagen}
-                        onError={(e) =>
-                          console.log("Error cargando imagen:", e.target.src)
-                        }
-                      />
-                    ) : (
-                      <div style={estilos.imagenPlaceholder}>🛍️</div>
-                    )}
-                    <h3 style={estilos.nombreProducto}>{producto.nombre}</h3>
-                    <p style={estilos.descripcion}>{producto.descripcion}</p>
-                    <p style={estilos.categoria}> {producto.categoria}</p>
-                    <p style={estilos.precio}>${producto.precio}</p>
-                    <p style={estilos.stock}>Stock: {producto.stock}</p>
-                    {producto.stock > 0 ? (
-                      <button 
-                        style={estilos.btnAgregar} 
-                        onClick={() => agregarAlCarrito(producto)}
-                      >
-                        Agregar al carrito
-                      </button>
-                    ) : (
-                      <button 
-                        style={{ ...estilos.btnAgregar, backgroundColor: "#b0bec5", cursor: "not-allowed" }} 
-                        disabled
-                      >
-                        Sin stock
-                      </button>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
->>>>>>> Stashed changes
         </div>
       </div>
     </div>
