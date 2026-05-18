@@ -23,7 +23,8 @@ app.use('/api/productos', productoRoutes);//listado de productos para mostrar en
 app.use('/api/carrito', verificarToken, require('./routes/carritoRoutes'));//definir la ruta del  carrito
 app.use('/api/envio', verificarToken, require('./routes/envioRoutes'));//definir la ruta de la  direccion de envio
 app.use('/api/pedidos', verificarToken, require('./routes/pedidoRoutes'));//definir la ruta de los pedidos
-//app.use('/api/factura', verificarToken, require('./routes/facturaRoutes'));//definir la ruta de las facturas
+app.use('/api/factura', verificarToken, require('./routes/facturaRoutes'));//definir la ruta de las facturas
+app.use('/api/pago', verificarToken, require('./routes/pagoRoutes'));//definir la ruta de los pagos
 
 
 app.get('/', (req, res) => {

@@ -11,14 +11,6 @@ function Carrito() {
 const cliente = JSON.parse(localStorage.getItem("cliente"));
 const id_cliente = cliente?.id; 
 
-useEffect(() => {
-  if (!id_cliente) {
-    navigate("/login");
-    return;
-  }
-  cargarCarrito();
-}, [id_cliente, cargarCarrito, navigate]);//cargar carrito con los datos del cliente
-
   const cargarCarrito = useCallback(async () => {
   try {
     const res = await fetchConToken(`http://localhost:3001/api/carrito/${id_cliente}`);
@@ -32,8 +24,12 @@ useEffect(() => {
 }, [id_cliente]);
 
 useEffect(() => {
+  if (!id_cliente) {
+    navigate("/login");
+    return;
+  }
   cargarCarrito();
-}, [cargarCarrito]);
+}, [id_cliente, cargarCarrito, navigate]);//cargar carrito con los datos del cliente
 
   const eliminarItem = async (id_item_carrito) => {
     try {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Inicio.css"; 
+import fetchConToken from "../utils/fetchConToken";
 
 function Inicio() {
   const [productos, setProductos] = useState([]);
@@ -91,27 +92,26 @@ function Inicio() {
   };
   //agregar al carrito
   const agregarAlCarrito = async (producto) => {
-    try {
-      const res = await fetch("http://localhost:3001/api/carrito/agregar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_cliente,
-          id_producto: producto.id_producto,
-          cantidad: 1,
-          precio: producto.precio,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(`¡${producto.nombre} agregado al carrito con éxito!`);
-      } else {
-        alert(data.error || "Stock insuficiente, no se pudo agregar");
-      }
-    } catch (error) {
-      console.error("Error de conexión:", error);
+  try {
+    const res = await fetchConToken("http://localhost:3001/api/carrito/agregar", {
+      method: "POST",
+      body: JSON.stringify({
+        id_cliente,
+        id_producto: producto.id_producto,
+        cantidad: 1,
+        precio: producto.precio,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(`¡${producto.nombre} agregado al carrito con éxito!`);
+    } else {
+      alert(data.error || "Stock insuficiente, no se pudo agregar");
     }
-  };
+  } catch (error) {
+    console.error("Error de conexión:", error);
+  }
+};
 
   return (
     <div style={estilos.pagina}>

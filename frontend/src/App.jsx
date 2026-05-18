@@ -5,6 +5,7 @@ import Inicio from './pages/Inicio'
 import Carrito from './pages/Carrito';
 import Envio from "./pages/Envio";
 import MisPedidos from "./pages/MisPedidos";
+import Facturas from "./pages/Facturas";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/envio" element={<Envio />} />
         <Route path="/mis-pedidos" element={<MisPedidos />} />
+        <Route path="/facturas" element={<Facturas />} />
     </Routes>
   )
 }
