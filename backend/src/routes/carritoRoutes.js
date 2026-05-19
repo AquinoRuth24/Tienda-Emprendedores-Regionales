@@ -6,6 +6,8 @@ router.post('/agregar', carritoController.agregarItem);
 router.post('/eliminar', carritoController.eliminarItem);
 router.post('/actualizar', carritoController.actualizarCantidad);
 router.post('/finalizar', carritoController.finalizarCompra);
-router.get('/:id_cliente', carritoController.obtenerCarrito);
 router.post('/finalizar-con-envio', carritoController.finalizarCompraConEnvio);
+
+router.get('/:id_cliente', carritoController.obtenerCarrito);
+
 module.exports = router;

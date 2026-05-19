@@ -7,13 +7,21 @@ function Envio() {
   const location = useLocation();
   const fromState = location.state;
 
+//Carga inicial: intenta obtener datos del estado de navegación en caso de no estar recargado,
+  const [envioData, setEnvioData] = useState(null);
   useEffect(() => {
-  if (fromState?.id_carrito) {
-    sessionStorage.setItem("envio_state", JSON.stringify(fromState));
-  }
-}, [fromState]);//guarda el estado del carrito para mantenerlo al volver desde el proceso de envio o al actualizar la pagina 
-const envioData = fromState || JSON.parse(sessionStorage.getItem("envio_state") || "{}");
-const { id_carrito, id_cliente, subtotal } = envioData;
+    if (fromState?.id_carrito) {
+      sessionStorage.setItem("envio_state", JSON.stringify(fromState));
+      setEnvioData(fromState);
+    } else {
+      const guardado = sessionStorage.getItem("envio_state");
+      if (guardado) {
+        setEnvioData(JSON.parse(guardado));
+      }
+    }
+  }, [fromState]);
+  const id_carrito = envioData?.id_carrito;
+  const subtotal = envioData?.subtotal;
 
   //paso: "seleccion","domicilio","confirmacion"
   const [paso, setPaso] = useState("seleccion");
@@ -39,10 +47,11 @@ const { id_carrito, id_cliente, subtotal } = envioData;
 
   const ID_DOMICILIO = 1;
 
-  useEffect(() => {
+useEffect(() => {
     const cargarMetodos = async () => {
       try {
         const res = await fetchConToken("http://localhost:3001/api/envio/metodos");
+        if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
         const data = await res.json();
         if (res.ok) setMetodosEnvio(data);
       } catch (error) {
@@ -103,49 +112,51 @@ const { id_carrito, id_cliente, subtotal } = envioData;
     return true;
   };
 
-  const confirmarCompra = async (datosEnvio) => {
-  if (cargando) return;
-  setCargando(true);
-  try {
-    const res = await fetchConToken("http://localhost:3001/api/carrito/finalizar-con-envio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_carrito, id_cliente, datosEnvio }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      sessionStorage.removeItem("envio_state");
-      alert("¡Compra realizada con éxito!");
-      navigate("/inicio");
-    } else {
-      alert(data.error || "Error al procesar la compra");
+const confirmarCompra = async (datosEnvio) => {
+    if (cargando) return;
+    setCargando(true);
+    try {
+      const res = await fetchConToken("http://localhost:3001/api/carrito/finalizar-con-envio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        //verificar que no sea null antes de intentar parsear si el token expiro
+        body: JSON.stringify({ id_carrito, datosEnvio }),
+      });
+      if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
+      const data = await res.json();
+      if (res.ok) {
+        sessionStorage.removeItem("envio_state");
+        alert("¡Compra realizada con éxito!");
+        navigate("/inicio");
+      } else {
+        alert(data.error || "Error al procesar la compra");
+      }
+    } catch (error) {
+      alert("No se pudo conectar con el servidor. Intentá nuevamente.");
+      console.error(error);
+    } finally {
+      setCargando(false);
     }
-  } catch (error) {
-    alert("No se pudo conectar con el servidor. Intentá nuevamente.");
-    console.error(error);
-  } finally {
-    setCargando(false);
-  }
-};
+  };
 
 //****************Retiro en el Local*************/
 const confirmarRetiro = () => confirmarCompra({ tipo: "retiro" });
-
-//Al confirmar envio a domicilio
-const confirmarEnvio = () => confirmarCompra({
-  tipo: "domicilio",
-  id_tipo_envio: ID_DOMICILIO,
-  calle: form.calle.trim(),
-  numero: parseInt(form.numero),
-  descripcion: form.descripcion.trim() || null,
-  ciudad: form.ciudad.trim(),
-  provincia: form.provincia.trim(),
-});
+  const confirmarEnvio = () =>
+    confirmarCompra({
+      tipo: "domicilio",
+      id_tipo_envio: ID_DOMICILIO,
+      calle: form.calle.trim(),
+      numero: parseInt(form.numero),
+      descripcion: form.descripcion.trim() || null,
+      ciudad: form.ciudad.trim(),
+      codigo_postal: form.codigo_postal ? parseInt(form.codigo_postal) : 0,
+      provincia: form.provincia.trim(),
+    });
 
   //****************Envio a domicilio*************/
 
-  const calcularCosto = async () => {
-    if (cargandoCosto) return; //evita doble clic
+const calcularCosto = async () => {
+    if (cargandoCosto) return;
     setCargandoCosto(true);
     try {
       const res = await fetchConToken("http://localhost:3001/api/envio/calcular", {
@@ -153,6 +164,7 @@ const confirmarEnvio = () => confirmarCompra({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_tipo_envio: ID_DOMICILIO }),
       });
+      if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
       const data = await res.json();
       if (res.ok) {
         setCostoEnvio(data.costo);

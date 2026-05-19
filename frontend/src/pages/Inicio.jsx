@@ -92,26 +92,28 @@ function Inicio() {
   };
   //agregar al carrito
   const agregarAlCarrito = async (producto) => {
-  try {
-    const res = await fetchConToken("http://localhost:3001/api/carrito/agregar", {
-      method: "POST",
-      body: JSON.stringify({
-        id_cliente,
-        id_producto: producto.id_producto,
-        cantidad: 1,
-        precio: producto.precio,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert(`¡${producto.nombre} agregado al carrito con éxito!`);
-    } else {
-      alert(data.error || "Stock insuficiente, no se pudo agregar");
+    try {
+      const res = await fetchConToken("http://localhost:3001/api/carrito/agregar", {
+        method: "POST",
+        body: JSON.stringify({
+          id_producto: producto.id_producto,
+          cantidad: 1,
+          precio: producto.precio,
+        }),
+      });
+//manejo de respuesta por si el token expiro 
+      if (!res) return;
+      const data = await res.json();
+      if (res.ok) {
+        alert(`¡${producto.nombre} agregado al carrito con éxito!`);
+      } else {
+        alert(data.error || "Stock insuficiente, no se pudo agregar");
+      }
+    } catch (error) {
+      console.error("Error de conexión:", error);
     }
-  } catch (error) {
-    console.error("Error de conexión:", error);
-  }
-};
+  };
+
 
   return (
     <div style={estilos.pagina}>
@@ -224,12 +226,13 @@ function Inicio() {
 
         {/* LISTA DE PRODUCTOS */}
         <div style={estilos.listaProductos}>
+          {/*muestra el nombre del emprendedor en lugar del id */}
           <h2 style={estilos.tituloProductos}>
             {categoriaSeleccionada
               ? `Categoría: ${categorias.find((c) => c.id_categoria === categoriaSeleccionada)?.descripcion}`
               : emprendedorSeleccionado
-                ? `Emprendedor #${emprendedorSeleccionado}`
-                : "Todos los productos"}
+              ? `Emprendedor: ${emprendedores.find((e) => e.id_usuario === emprendedorSeleccionado)?.apellidoNombre}`
+              : "Todos los productos"}
           </h2>
 
           {/*Indicador de carga */}

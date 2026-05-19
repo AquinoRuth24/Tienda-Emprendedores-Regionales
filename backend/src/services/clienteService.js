@@ -142,16 +142,17 @@ async validarContraseña(contraseñaIngresada, contraseñaBD) {
 },
 //generar token JWT
 generarToken(cliente) {
+    if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET no está configurado en las variables de entorno.");
+    }
     return jwt.sign(
     {
         id: cliente.id_cliente,
         nombre: cliente.apellidoNombre,
         email: cliente.email,
     },
-    process.env.JWT_SECRET || "secreto123",
-    {
-        expiresIn: "8h",
-    },
+    process.env.JWT_SECRET,
+    { expiresIn: "8h" }
     );
 },
 };

@@ -379,65 +379,54 @@ const carritoService = {
 
 // finalizar compra y envío en una sola transacción
 async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
-  const pool = await poolPromise;
-  const transaction = new sql.Transaction(pool);
-  const envioService = require("./envioService");
-
-  try {
-    await transaction.begin();
-
-    //Verificar que el carrito sigue activo
-    const reqVerificar = new sql.Request(transaction);
-    const verificar = await reqVerificar
-      .input("id_carrito", sql.Int, id_carrito)
-      .query(`
-        SELECT id_carrito, total_carrito, id_estado_carrito
-        FROM Carrito
-        WHERE id_carrito = @id_carrito
-        AND id_estado_carrito = 1
-      `);
-
-    if (!verificar.recordset[0]) {
-      throw new Error("Este carrito ya fue procesado o no existe");
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);
+    const envioService = require("./envioService");
+    try {
+      await transaction.begin();
+      const reqVerificar = new sql.Request(transaction);
+      const verificar = await reqVerificar
+        .input("id_carrito", sql.Int, id_carrito)
+        .query(`
+          SELECT id_carrito, total_carrito, id_estado_carrito
+          FROM Carrito
+          WHERE id_carrito = @id_carrito AND id_estado_carrito = 1
+        `);
+      if (!verificar.recordset[0]) {
+        throw new Error("Este carrito ya fue procesado o no existe");
+      }
+      const subtotal = verificar.recordset[0].total_carrito ?? 0;
+      //obtener items dentro de la transacción
+      const items = await carritoService.obtenerItemsCarritoEnTransaccion(id_carrito, transaction);
+      await carritoService.validarStockProductos(id_carrito, transaction);
+      await carritoService.actualizarStock(items, transaction);
+      const id_pedido = await carritoService.crearPedido(id_cliente, id_carrito, transaction);
+      await carritoService.cambiarEstadoCarrito(id_carrito, transaction);
+      const id_factura = await facturaService.crearFactura(id_pedido, subtotal, transaction);
+      await facturaService.cargarDetalles(id_factura, items, transaction);
+      //registrar el envio dentro de la misma transaccion
+      if (datosEnvio.tipo === "retiro") {
+        await envioService.registrarModalidadRetiro(id_pedido, transaction);
+      } else {
+        await envioService.asociarEnvio(
+          id_pedido,
+          datosEnvio.id_tipo_envio,
+          datosEnvio.calle,
+          datosEnvio.numero,
+          datosEnvio.descripcion,
+          datosEnvio.ciudad,
+          datosEnvio.codigo_postal ?? 0,
+          datosEnvio.provincia,
+          transaction
+        );
+      }
+      await transaction.commit();
+      return { mensaje: "Compra realizada con éxito", id_pedido, id_factura };
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
     }
-
-    const subtotal = verificar.recordset[0].total_carrito ?? 0;
-
-    const items = await carritoService.obtenerItemsCarrito(id_carrito);
-    await carritoService.validarStockProductos(id_carrito, transaction);
-    await carritoService.actualizarStock(items, transaction);
-
-    const id_pedido = await carritoService.crearPedido(id_cliente, id_carrito, transaction);
-    await carritoService.cambiarEstadoCarrito(id_carrito, transaction);
-
-    const id_factura = await facturaService.crearFactura(id_pedido, subtotal, transaction);
-    await facturaService.cargarDetalles(id_factura, items, transaction);
-
-    // Registrar envío dentro de la misma transacción
-    if (datosEnvio.tipo === "retiro") {
-      await envioService.registrarModalidadRetiro(id_pedido, transaction);
-    } else {
-      await envioService.asociarEnvio(
-        id_pedido,
-        datosEnvio.id_tipo_envio,
-        datosEnvio.calle,
-        datosEnvio.numero,
-        datosEnvio.descripcion,
-        datosEnvio.ciudad,
-        datosEnvio.provincia,
-        transaction
-      );
-    }
-
-    await transaction.commit();
-
-    return { mensaje: "Compra realizada con éxito", id_pedido, id_factura };
-
-  } catch (err) {
-    await transaction.rollback();
-    throw err;
-  }
-},
+  },
 };
 
 module.exports = carritoService;

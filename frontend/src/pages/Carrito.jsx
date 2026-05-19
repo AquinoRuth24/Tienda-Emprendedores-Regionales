@@ -12,16 +12,18 @@ const cliente = JSON.parse(localStorage.getItem("cliente"));
 const id_cliente = cliente?.id; 
 
   const cargarCarrito = useCallback(async () => {
-  try {
-    const res = await fetchConToken(`http://localhost:3001/api/carrito/${id_cliente}`);
-    const data = await res.json();
-    setItems(data.items || []);
-    setSubtotal(data.subtotal || 0);
-    setIdCarrito(data.id_carrito);
-  } catch (error) {
-    console.error("Error al cargar carrito:", error);
-  }
-}, [id_cliente]);
+    try {
+      const res = await fetchConToken(`http://localhost:3001/api/carrito/${id_cliente}`);
+      //verificar que no sea null antes de intentar parsear si el token expiro
+      if (!res) return;
+      const data = await res.json();
+      setItems(data.items || []);
+      setSubtotal(data.subtotal || 0);
+      setIdCarrito(data.id_carrito);
+    } catch (error) {
+      console.error("Error al cargar carrito:", error);
+    }
+  }, [id_cliente]);
 
 useEffect(() => {
   if (!id_cliente) {
@@ -33,49 +35,50 @@ useEffect(() => {
 
   const eliminarItem = async (id_item_carrito) => {
     try {
-      const res = await fetchConToken('http://localhost:3001/api/carrito/eliminar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_item_carrito, id_carrito: idCarrito })
+      const res = await fetchConToken("http://localhost:3001/api/carrito/eliminar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_item_carrito, id_carrito: idCarrito }),
       });
+      //verificar que no sea null antes de intentar parsear si el token expiro
+      if (!res) return;
       if (res.ok) {
-        cargarCarrito(); //Recargamos para actualizar el total y la lista
+        cargarCarrito();
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
     }
   };
-  const cambiarCantidad = async (item, nuevaCantidad) => {
-//Validamos que no supere el stock
+
+const cambiarCantidad = async (item, nuevaCantidad) => {
     if (nuevaCantidad > item.stock) {
       alert(`¡Ups! Solo hay ${item.stock} unidades disponibles de ${item.nombre}.`);
       return;
     }
-
-//Si baja a 0 lo eliminamos directamente para evitar items con cantidad 0
     if (nuevaCantidad === 0) {
       eliminarItem(item.id_item_carrito);
       return;
     }
-
-// Si todo está bien actualiza la cantidad en el backend
     try {
-      const res = await fetchConToken('http://localhost:3001/api/carrito/actualizar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id_item_carrito: item.id_item_carrito, 
-          nueva_cantidad: nuevaCantidad, 
-          id_carrito: idCarrito 
-        })
+      const res = await fetchConToken("http://localhost:3001/api/carrito/actualizar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_item_carrito: item.id_item_carrito,
+          nueva_cantidad: nuevaCantidad,
+          id_carrito: idCarrito,
+        }),
       });
+      //verificar que no sea null antes de intentar parsear si el token expiro
+      if (!res) return;
       if (res.ok) {
-        cargarCarrito(); //Recargamos para que se actualice la pantalla
+        cargarCarrito();
       }
     } catch (error) {
       console.error("Error al actualizar cantidad:", error);
     }
-  };
+};
+
 //solo redirige a la pantalla de envio, el proceso de compra se finaliza ahi
 const irAEnvio = () => {
     if (!idCarrito || items.length === 0) {

@@ -4,8 +4,8 @@ import Registro from './pages/Registro'
 import Inicio from './pages/Inicio'
 import Carrito from './pages/Carrito';
 import Envio from "./pages/Envio";
-import MisPedidos from "./pages/MisPedidos";
-import Facturas from "./pages/Facturas";
+import MisPedidos from "./pages/Mispedidos";
+import Facturas from "./pages/facturas";
 
 function App() {
   return (
