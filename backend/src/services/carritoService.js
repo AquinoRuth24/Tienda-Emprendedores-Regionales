@@ -334,49 +334,6 @@ const carritoService = {
     return result.recordset[0].id_pedido;
 },
 
-  //finalizar compra
-  async finalizarCompra(id_carrito, id_cliente) {
-  const pool = await poolPromise;
-  const transaction = new sql.Transaction(pool);
-  try {
-    await transaction.begin();
-//Verificar que el carrito sigue activo,evitando que se procese dos veces el mismo carrito
-    const reqVerificar = new sql.Request(transaction);
-    const verificar = await reqVerificar
-      .input("id_carrito", sql.Int, id_carrito)
-      .query(`
-        SELECT id_carrito, total_carrito, id_estado_carrito
-        FROM Carrito
-        WHERE id_carrito = @id_carrito
-        AND id_estado_carrito = 1  -- solo si sigue activo
-      `);
-    if (!verificar.recordset[0]) {
-      throw new Error("Este carrito ya fue procesado o no existe");
-    }
-//Toma el subtotal del carrito verificado para evitar inconsistencias por cambios posteriores al proceso de compra
-    const subtotal = verificar.recordset[0].total_carrito ?? 0;
-
-    const items = await carritoService.obtenerItemsCarrito(id_carrito);
-    await carritoService.validarStockProductos(id_carrito, transaction);
-    await carritoService.actualizarStock(items, transaction);
-    const id_pedido = await carritoService.crearPedido(id_cliente, id_carrito, transaction);
-
-//Cambia estado dentro de la transacción, bloquea intentos simultáneos
-    await carritoService.cambiarEstadoCarrito(id_carrito, transaction);
-
-    const id_factura = await facturaService.crearFactura(id_pedido, subtotal, transaction);
-    await facturaService.cargarDetalles(id_factura, items, transaction);
-
-    await transaction.commit();
-
-    return { mensaje: "Compra realizada con éxito", id_pedido, id_factura };
-
-  } catch (err) {
-    await transaction.rollback();
-    throw err;
-  }
-},
-
 // finalizar compra y envío en una sola transacción
 async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
     const pool = await poolPromise;
@@ -397,7 +354,7 @@ async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
       }
       const subtotal = verificar.recordset[0].total_carrito ?? 0;
       //obtener items dentro de la transacción
-      const items = await carritoService.obtenerItemsCarritoEnTransaccion(id_carrito, transaction);
+      const items = await carritoService.obtenerItemsCarrito(id_carrito);
       await carritoService.validarStockProductos(id_carrito, transaction);
       await carritoService.actualizarStock(items, transaction);
       const id_pedido = await carritoService.crearPedido(id_cliente, id_carrito, transaction);

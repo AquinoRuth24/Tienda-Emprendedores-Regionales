@@ -75,16 +75,6 @@ const carritoController = {
     }
   },
 
-  //finalizar compra
-  finalizarCompra: async (req, res) => {
-    const { id_carrito, id_cliente } = req.body;
-    try {
-      const resultado = await carritoService.finalizarCompra(id_carrito, id_cliente);
-      res.json(resultado);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  },
 //finalizar la compra y registrar el envio
 finalizarCompraConEnvio: async (req, res) => {
     const id_cliente = req.cliente.id; //obtenemos el id del cliente desde el token
