@@ -92,27 +92,38 @@ function Inicio() {
   };
   //agregar al carrito
   const agregarAlCarrito = async (producto) => {
-    try {
-      const res = await fetchConToken("http://localhost:3001/api/carrito/agregar", {
+  try {
+    console.log({
+      id_cliente,
+      id_producto: producto.id_producto,
+      cantidad: 1,
+      precio: producto.precio,
+    });
+
+    const res = await fetchConToken(
+      "http://localhost:3001/api/carrito/agregar",
+      {
         method: "POST",
         body: JSON.stringify({
+          id_cliente,
           id_producto: producto.id_producto,
           cantidad: 1,
           precio: producto.precio,
         }),
-      });
-//manejo de respuesta por si el token expiro 
-      if (!res) return;
-      const data = await res.json();
-      if (res.ok) {
-        alert(`¡${producto.nombre} agregado al carrito con éxito!`);
-      } else {
-        alert(data.error || "Stock insuficiente, no se pudo agregar");
       }
-    } catch (error) {
-      console.error("Error de conexión:", error);
+    );
+    if (!res) return;
+
+    const data = await res.json();
+    if (res.ok) {
+      alert(`¡${producto.nombre} agregado al carrito con éxito!`);
+    } else {
+      alert(data.error || "No se pudo agregar al carrito");
     }
-  };
+  } catch (error) {
+    console.error("Error de conexión:", error);
+  }
+};
 
 
   return (

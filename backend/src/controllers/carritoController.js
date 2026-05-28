@@ -5,6 +5,11 @@ const carritoController = {
   //agregar producto al carrito, si no existe se crea uno nuevo
   agregarItem: async (req, res) => {
     const { id_cliente, id_producto, cantidad, precio } = req.body;
+    if (!id_cliente || !id_producto || !cantidad || !precio) {
+  return res.status(400).json({
+    error: "Faltan datos requeridos",
+  });
+}
     try {
       await carritoService.getProducto(id_producto);
 

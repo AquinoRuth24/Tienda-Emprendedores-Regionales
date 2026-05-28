@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({
+  path: path.resolve(__dirname, '../.env')
+});
+
 require('./config/db');
 
 //importar las rutas
@@ -12,7 +16,6 @@ const verificarToken = require('./middlewares/authMiddleware');
 const app = express();
 app.use(cors());
 app.use(express.json());
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rutas públicas sin token
@@ -35,3 +38,5 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);
 });
+
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
