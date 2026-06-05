@@ -126,7 +126,7 @@ const confirmarCompra = async (datosEnvio) => {
       const data = await res.json();
       if (res.ok) {
         sessionStorage.removeItem("envio_state");
-        alert("¡Compra realizada con éxito!");
+        alert("¡Compra y envío realizados con éxito!");
         navigate("/inicio");
       } else {
         alert(data.error || "Error al procesar la compra");

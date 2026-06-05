@@ -95,6 +95,45 @@ finalizarCompraConEnvio: async (req, res) => {
       res.status(400).json({ error: err.message });
     }
   },
+validarAntesDeEnvio: async (req, res) => {
+  const { id_carrito } = req.params;
+  try {
+    const pool = await poolPromise;
+
+    // Verifica carrito activo
+    const carritoResult = await pool
+      .request()
+      .input("id_carrito", sql.Int, id_carrito)
+      .query(`SELECT id_estado_carrito FROM Carrito WHERE id_carrito = @id_carrito`);
+
+    if (!carritoResult.recordset[0]) {
+      return res.status(400).json({ error: "El carrito no existe" });
+    }
+    if (carritoResult.recordset[0].id_estado_carrito !== 1) {
+      return res.status(400).json({ error: "Este carrito ya fue procesado" });
+    }
+
+    // Verifica stock de cada item
+    const stockResult = await pool
+      .request()
+      .input("id_carrito", sql.Int, id_carrito)
+      .query(`
+        SELECT p.nombre, ic.cantidad, p.stock
+        FROM Item_carrito ic
+        INNER JOIN Producto p ON ic.id_producto = p.id_producto
+        WHERE ic.id_carrito = @id_carrito
+      `);
+
+    const sinStock = stockResult.recordset.filter(i => i.cantidad > i.stock);
+    if (sinStock.length > 0) {
+      return res.status(400).json({ error: "Stock insuficiente para uno o más productos" });
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
 };
 
 module.exports = carritoController;

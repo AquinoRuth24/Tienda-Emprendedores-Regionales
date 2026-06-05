@@ -12,19 +12,6 @@ obtenerMetodos: async (req, res) => {
     }
 },
 
-//*************Retiro en el local*************
-
-//registra la modalidad de retiro en el pedido
-registrarRetiro: async (req, res) => {
-    const { id_pedido } = req.body;
-    try {
-    await envioService.registrarModalidadRetiro(id_pedido);
-    res.json({ mensaje: "Listo para retirar en el local" });
-    } catch (err) {
-    res.status(400).json({ error: err.message });
-    }
-},
-
 //*************ENVÍO A DOMICILIO*************
 
 //calcula el costo de envío según el método seleccionado

@@ -5,9 +5,6 @@ const envioController = require('../controllers/envioController');
 //obtener opciones de recepción (envío a domicilio / retiro en el local)
 router.get('/metodos', envioController.obtenerMetodos);
 
-// retiro en el local → registraModalidad(retiro)
-router.post('/retiro', envioController.registrarRetiro);
-
 // envío a domicilio → calcularCostoEnvio(direccion)
 router.post('/calcular', envioController.calcularCosto);
 

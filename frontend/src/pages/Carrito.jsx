@@ -21,8 +21,9 @@ const id_cliente = cliente?.id;
       setSubtotal(data.subtotal || 0);
       setIdCarrito(data.id_carrito);
     } catch (error) {
-      console.error("Error al cargar carrito:", error);
-    }
+  console.error("Error al cargar carrito:", error);
+  alert("No se pudo cargar el carrito. Verificá tu conexión.");
+}
   }, [id_cliente]);
 
 useEffect(() => {
@@ -47,6 +48,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
+      alert("No se pudo eliminar el producto. Verificá tu conexión e intentá de nuevo.");
     }
   };
 
@@ -76,17 +78,32 @@ const cambiarCantidad = async (item, nuevaCantidad) => {
       }
     } catch (error) {
       console.error("Error al actualizar cantidad:", error);
+      alert("No se pudo actualizar la cantidad. Verificá tu conexión e intentá de nuevo.");
     }
 };
 
 //solo redirige a la pantalla de envio, el proceso de compra se finaliza ahi
-const irAEnvio = () => {
-    if (!idCarrito || items.length === 0) {
-      alert("Tu carrito está vacío");
+const irAEnvio = async () => {
+  if (!idCarrito || items.length === 0) {
+    alert("Tu carrito está vacío");
+    return;
+  }
+  try {
+    const res = await fetchConToken(
+      `http://localhost:3001/api/carrito/validar/${idCarrito}`
+    );
+    if (!res) return;
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error); // "Este carrito ya fue procesado" o "Stock insuficiente..."
       return;
     }
     navigate("/envio", { state: { id_carrito: idCarrito, id_cliente, subtotal } });
-  };
+  } catch (error) {
+    console.error("Error al validar carrito:", error);
+    alert("No se pudo validar el carrito. Verificá tu conexión e intentá de nuevo.");
+  }
+};
 
 
   return (
