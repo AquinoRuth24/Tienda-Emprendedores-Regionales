@@ -8,5 +8,6 @@ router.post('/actualizar', carritoController.actualizarCantidad);
 router.post('/finalizar-con-envio', carritoController.finalizarCompraConEnvio);
 
 router.get('/:id_cliente', carritoController.obtenerCarrito);
+router.get("/validar/:id_carrito", verificarToken, carritoController.validarAntesDeEnvio);
 
 module.exports = router;

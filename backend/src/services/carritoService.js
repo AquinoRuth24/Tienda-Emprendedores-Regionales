@@ -280,6 +280,20 @@ const carritoService = {
           WHERE id_item_carrito = @id
         `);
     } else {
+      //verificar stock antes de actualizar la cantidad
+      const stockResult = await pool
+        .request()
+        .input("id_item", sql.Int, id_item_carrito)
+        .query(`
+          SELECT p.stock
+          FROM Item_carrito i
+          INNER JOIN Producto p ON i.id_producto = p.id_producto
+          WHERE i.id_item_carrito = @id_item
+        `);
+      const stockDisponible = stockResult.recordset[0]?.stock ?? 0;
+      if (nueva_cantidad > stockDisponible) {
+        throw new Error(`Stock insuficiente. Máximo disponible: ${stockDisponible}`);
+      }
       await pool
         .request()
         .input("id", sql.Int, id_item_carrito)
@@ -354,11 +368,16 @@ async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
       }
       const subtotal = verificar.recordset[0].total_carrito ?? 0;
       //obtener items dentro de la transacción
-      const items = await carritoService.obtenerItemsCarrito(id_carrito);
-      await carritoService.validarStockProductos(id_carrito, transaction);
+      const items = await carritoService.validarStockProductos(id_carrito, transaction);
       await carritoService.actualizarStock(items, transaction);
       const id_pedido = await carritoService.crearPedido(id_cliente, id_carrito, transaction);
       await carritoService.cambiarEstadoCarrito(id_carrito, transaction);
+      //calcular costo de envío si corresponde
+      let costoEnvio = 0;
+      if (datosEnvio.tipo !== "retiro") {
+        costoEnvio = await envioService.calcularCostoEnvio(datosEnvio.id_tipo_envio);
+      }
+      const totalFinal = subtotal + Number(costoEnvio);
       const id_factura = await facturaService.crearFactura(id_pedido, subtotal, transaction);
       await facturaService.cargarDetalles(id_factura, items, transaction);
       //registrar el envio dentro de la misma transaccion

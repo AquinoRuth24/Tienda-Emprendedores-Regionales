@@ -6,12 +6,14 @@ require('dotenv').config({
 });
 
 require('./config/db');
+require('express-async-errors');
 
 //importar las rutas
 
 const clienteRoutes = require('./routes/clienteRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const verificarToken = require('./middlewares/authMiddleware');
+const { router: compraRouter } = require('./facade/CompraFacade');
 
 const app = express();
 app.use(cors());
@@ -28,6 +30,7 @@ app.use('/api/envio', verificarToken, require('./routes/envioRoutes'));//definir
 app.use('/api/pedidos', verificarToken, require('./routes/pedidoRoutes'));//definir la ruta de los pedidos
 app.use('/api/factura', verificarToken, require('./routes/facturaRoutes'));//definir la ruta de las facturas
 app.use('/api/pago', verificarToken, require('./routes/pagoRoutes'));//definir la ruta de los pagos
+app.use('/api/compra', verificarToken, compraRouter);//definir la ruta de la compra, que es el proceso completo que involucra carrito, envio, pedido y factura
 
 
 app.get('/', (req, res) => {

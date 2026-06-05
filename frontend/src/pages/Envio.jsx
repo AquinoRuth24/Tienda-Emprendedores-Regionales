@@ -116,7 +116,7 @@ const confirmarCompra = async (datosEnvio) => {
     if (cargando) return;
     setCargando(true);
     try {
-      const res = await fetchConToken("http://localhost:3001/api/carrito/finalizar-con-envio", {
+      const res = await fetchConToken("http://localhost:3001/api/compra/finalizar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         //verificar que no sea null antes de intentar parsear si el token expiro
@@ -126,7 +126,7 @@ const confirmarCompra = async (datosEnvio) => {
       const data = await res.json();
       if (res.ok) {
         sessionStorage.removeItem("envio_state");
-        alert("¡Compra realizada con éxito!");
+        alert("¡Compra y envío realizados con éxito!");
         navigate("/inicio");
       } else {
         alert(data.error || "Error al procesar la compra");
