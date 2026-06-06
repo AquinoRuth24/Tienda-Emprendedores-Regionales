@@ -314,12 +314,9 @@ const carritoService = {
   async cambiarEstadoCarrito(id_carrito, transaction) {
     const req = new sql.Request(transaction);
     await req
-      .input("id_c", sql.Int, id_carrito)
-      .query(`
-        UPDATE Carrito
-        SET id_estado_carrito = 2
-        WHERE id_carrito = @id_c
-      `);
+      .input("id_carrito",         sql.Int,         id_carrito)
+      .input("descripcion_estado", sql.VarChar(200), "Finalizado")
+      .execute("sp_CambiarEstadoCarrito");
   },
 
   //crear pedido

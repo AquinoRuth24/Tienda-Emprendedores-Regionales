@@ -45,6 +45,20 @@ async cargarDetalles(id_factura, items, transaction) {
         `);
     }
 },
+
+async obtenerFacturasCliente(id_cliente) {
+    const pool = await poolPromise;
+    const result = await pool
+    .request()
+    .input("id_cliente", sql.Int, id_cliente)
+    .execute("sp_ObtenerFacturasCliente");
+
+    return {
+      facturas: result.recordsets[0],  // cabecera de facturas
+      detalles: result.recordsets[1],  // detalle de productos
+    };
+},
+
 };
 
 module.exports = facturaService;

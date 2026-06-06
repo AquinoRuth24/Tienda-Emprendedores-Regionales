@@ -1,3 +1,4 @@
+const { sql, poolPromise } = require("../config/db");
 const carritoService = require("../services/carritoService");
 
 const carritoController = {
