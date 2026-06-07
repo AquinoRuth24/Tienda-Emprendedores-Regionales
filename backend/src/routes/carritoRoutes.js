@@ -6,7 +6,7 @@ const  verificarToken  = require('../middlewares/authMiddleware');
 router.post('/agregar', carritoController.agregarItem);
 router.post('/eliminar', carritoController.eliminarItem);
 router.post('/actualizar', carritoController.actualizarCantidad);
-router.post('/finalizar-con-envio', carritoController.finalizarCompraConEnvio);
+//router.post('/finalizar-con-envio', carritoController.finalizarCompraConEnvio);
 
 router.get("/validar/:id_carrito", verificarToken, carritoController.validarAntesDeEnvio);
 router.get('/:id_cliente', carritoController.obtenerCarrito);

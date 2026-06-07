@@ -346,7 +346,7 @@ const carritoService = {
 },
 
 // finalizar compra y envío en una sola transacción
-async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
+/*async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
 //validar que se haya seleccionado un método de envío válido
   if (!datosEnvio || !datosEnvio.tipo) {
     throw new Error("Debe seleccionar un método de recepción del pedido");
@@ -408,12 +408,12 @@ async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
         );
       }
       await transaction.commit();
-      return { mensaje: "Compra realizada con éxito", id_pedido, id_factura };
+      return { mensaje: "Compra y envio realizados con éxito", id_pedido, id_factura };
     } catch (err) {
       await transaction.rollback();
       throw err;
     }
-  },
+  },*/
 };
 
 module.exports = carritoService;

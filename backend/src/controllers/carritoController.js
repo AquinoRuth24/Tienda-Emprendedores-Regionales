@@ -86,7 +86,7 @@ if (!Number.isInteger(Number(cantidad)) || Number(cantidad) <= 0) {
   },
 
 //finalizar la compra y registrar el envio
-finalizarCompraConEnvio: async (req, res) => {
+/*finalizarCompraConEnvio: async (req, res) => {
     const id_cliente = req.cliente.id; //obtenemos el id del cliente desde el token
     const { id_carrito, datosEnvio } = req.body;
     try {
@@ -100,6 +100,7 @@ finalizarCompraConEnvio: async (req, res) => {
       res.status(400).json({ error: err.message });
     }
   },
+*/
 validarAntesDeEnvio: async (req, res) => {
   const { id_carrito } = req.params;
   try {
