@@ -85,7 +85,7 @@ const cambiarCantidad = async (item, nuevaCantidad) => {
 //solo redirige a la pantalla de envio, el proceso de compra se finaliza ahi
 const irAEnvio = async () => {
   if (!idCarrito || items.length === 0) {
-    alert("Tu carrito está vacío");
+    alert("El carrito está vacío");
     return;
   }
   try {

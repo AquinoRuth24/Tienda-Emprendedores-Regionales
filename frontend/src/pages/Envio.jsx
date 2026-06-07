@@ -7,7 +7,7 @@ function Envio() {
   const location = useLocation();
   const fromState = location.state;
 
-//Carga inicial: intenta obtener datos del estado de navegación en caso de no estar recargado,
+  //Carga inicial: intenta obtener datos del estado de navegación en caso de no estar recargado,
   const [envioData, setEnvioData] = useState(null);
   useEffect(() => {
     if (fromState?.id_carrito) {
@@ -47,10 +47,12 @@ function Envio() {
 
   const ID_DOMICILIO = 1;
 
-useEffect(() => {
+  useEffect(() => {
     const cargarMetodos = async () => {
       try {
-        const res = await fetchConToken("http://localhost:3001/api/envio/metodos");
+        const res = await fetchConToken(
+          "http://localhost:3001/api/envio/metodos",
+        );
         if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
         const data = await res.json();
         if (res.ok) setMetodosEnvio(data);
@@ -61,7 +63,7 @@ useEffect(() => {
     cargarMetodos();
   }, []);
 
-  //costo real de domicilio desde la BD
+  //costo real de domicilio
   const costoBase =
     metodosEnvio.find((m) => m.id_tipo_envio === ID_DOMICILIO)?.costo_base ??
     "...";
@@ -112,35 +114,45 @@ useEffect(() => {
     return true;
   };
 
-const confirmarCompra = async (datosEnvio) => {
-    if (cargando) return;
-    setCargando(true);
-    try {
-      const res = await fetchConToken("http://localhost:3001/api/compra/finalizar", {
+  const confirmarCompra = async (datosEnvio) => {
+  if (cargando) return;
+  setCargando(true);
+  try {
+    const res = await fetchConToken(
+      "http://localhost:3001/api/compra/finalizar",
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        //verificar que no sea null antes de intentar parsear si el token expiro
         body: JSON.stringify({ id_carrito, datosEnvio }),
-      });
-      if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
-      const data = await res.json();
-      if (res.ok) {
-        sessionStorage.removeItem("envio_state");
-        alert("¡Compra y envío realizados con éxito!");
-        navigate("/inicio");
-      } else {
-        alert(data.error || "Error al procesar la compra");
       }
-    } catch (error) {
-      alert("No se pudo conectar con el servidor. Intentá nuevamente.");
-      console.error(error);
-    } finally {
-      setCargando(false);
+    );
+    if (!res) return;
+    const data = await res.json();
+    if (res.ok) {
+      sessionStorage.removeItem("envio_state");
+      if (datosEnvio.tipo === "retiro") {
+        alert("¡Listo para retirar en el local!");
+      } else {
+        alert("¡Compra y envío realizados con éxito!");
+      }
+      navigate("/inicio");
+    } else {
+      alert(data.error || "Error al procesar la compra");
+      if (datosEnvio.tipo !== "retiro") {
+        setPaso("domicilio");
+      }
     }
-  };
+  } catch (error) {
+//error de conexión con el servidor
+    alert("No se pudo conectar con el servidor. Intentá nuevamente.");
+    console.error(error);
+  } finally {
+    setCargando(false);
+  }
+};
 
-//****************Retiro en el Local*************/
-const confirmarRetiro = () => confirmarCompra({ tipo: "retiro" });
+  //****************Retiro en el Local*************/
+  const confirmarRetiro = () => confirmarCompra({ tipo: "retiro" });
   const confirmarEnvio = () =>
     confirmarCompra({
       tipo: "domicilio",
@@ -155,15 +167,18 @@ const confirmarRetiro = () => confirmarCompra({ tipo: "retiro" });
 
   //****************Envio a domicilio*************/
 
-const calcularCosto = async () => {
+  const calcularCosto = async () => {
     if (cargandoCosto) return;
     setCargandoCosto(true);
     try {
-      const res = await fetchConToken("http://localhost:3001/api/envio/calcular", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_tipo_envio: ID_DOMICILIO }),
-      });
+      const res = await fetchConToken(
+        "http://localhost:3001/api/envio/calcular",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_tipo_envio: ID_DOMICILIO }),
+        },
+      );
       if (!res) return; //verificar que no sea null antes de intentar parsear si el token expiro
       const data = await res.json();
       if (res.ok) {
@@ -198,7 +213,10 @@ const calcularCosto = async () => {
           <p style={{ color: "#888", marginBottom: "24px" }}>
             Primero agregá productos desde la tienda.
           </p>
-          <button style={estilos.btnFinalizar} onClick={() => navigate("/carrito")}>
+          <button
+            style={estilos.btnFinalizar}
+            onClick={() => navigate("/carrito")}
+          >
             Ir al carrito
           </button>
         </div>

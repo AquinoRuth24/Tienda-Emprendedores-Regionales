@@ -20,7 +20,7 @@ if (!Number.isInteger(Number(cantidad)) || Number(cantidad) <= 0) {
 
       const stock = await carritoService.verificarStock(id_producto);
       if (stock < cantidad) {
-        return res.status(400).json({ error: "Stock insuficiente" });
+        return res.status(400).json({ error: "Stock insuficiente, no se pudo agregar" });
       }
 
       const resultado = await carritoService.agregarProducto(
@@ -31,7 +31,7 @@ if (!Number.isInteger(Number(cantidad)) || Number(cantidad) <= 0) {
       );
       res.json(resultado);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: "Error al agregar producto", message: err.message });
     }
   },
 
@@ -45,7 +45,7 @@ if (!Number.isInteger(Number(cantidad)) || Number(cantidad) <= 0) {
       );
       res.json(resultado);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Error al eliminar producto", message: err.message });
     }
   },
 

@@ -375,7 +375,7 @@ async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
           WHERE id_carrito = @id_carrito AND id_estado_carrito = 1
         `);
       if (!verificar.recordset[0]) {
-        throw new Error("Este carrito ya fue procesado o no existe");
+        throw new Error("Este carrito ya fue procesado");
       }
       const subtotal = verificar.recordset[0].total_carrito ?? 0;
       //obtener items dentro de la transacción
