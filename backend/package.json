@@ -5,12 +5,18 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "jest --runInBand --forceExit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AquinoRuth24/Tienda-Emprendedores-Regionales.git"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -21,6 +27,14 @@
     "mssql": "^12.3.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  },
+  "jest": {
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/src/tests/**/*.test.js"
+  ]
   }
 }
