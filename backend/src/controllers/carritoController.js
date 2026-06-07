@@ -11,6 +11,10 @@ const carritoController = {
     error: "Faltan datos requeridos",
   });
 }
+if (!Number.isInteger(Number(cantidad)) || Number(cantidad) <= 0) {
+    return res.status(400).json({ error: "La cantidad debe ser un número entero mayor a 0" });
+  }
+  
     try {
       await carritoService.getProducto(id_producto);
 

@@ -112,6 +112,20 @@ async registrarDireccion(calle, numero, descripcion, nombreCiudad, codigoPostal,
     if (!calle || !numero || !nombreCiudad || !nombreProvincia) {
     throw new Error("Provincia, ciudad, calle y número son obligatorios");
     }
+//validar que número sea un entero positivo
+const numeroInt = parseInt(numero, 10);
+if (isNaN(numeroInt) || numeroInt <= 0 || String(numeroInt) !== String(numero).trim()) {
+    throw new Error("El número de calle debe ser un valor numérico válido y positivo");
+}
+//validar que ciudad no sea solo números
+if (/^\d+$/.test(nombreCiudad.trim())) {
+    throw new Error("El nombre de la ciudad no puede ser solo números");
+}
+//validar que provincia no sea solo números
+if (/^\d+$/.test(nombreProvincia.trim())) {
+    throw new Error("El nombre de la provincia no puede ser solo números");
+}
+
     //id_provincia normalizando el nombre
     const id_provincia = await envioService.obtenerOCrearProvincia(
     nombreProvincia,

@@ -347,6 +347,20 @@ const carritoService = {
 
 // finalizar compra y envío en una sola transacción
 async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
+//validar que se haya seleccionado un método de envío válido
+  if (!datosEnvio || !datosEnvio.tipo) {
+    throw new Error("Debe seleccionar un método de recepción del pedido");
+  }
+  const tiposValidos = ["retiro", "domicilio"];
+  if (!tiposValidos.includes(datosEnvio.tipo)) {
+    throw new Error("El método de envío seleccionado no es válido");
+  }
+//si es domicilio, validar que vengan los datos de dirección
+  if (datosEnvio.tipo === "domicilio") {
+    if (!datosEnvio.calle || !datosEnvio.numero || !datosEnvio.ciudad || !datosEnvio.provincia || !datosEnvio.id_tipo_envio) {
+      throw new Error("Para envío a domicilio debe completar todos los datos de dirección");
+    }
+  }
     const pool = await poolPromise;
     const transaction = new sql.Transaction(pool);
     const envioService = require("./envioService");
