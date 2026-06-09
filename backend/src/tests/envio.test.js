@@ -54,7 +54,7 @@ for (let i = 1; i <= 3; i++) {
 
 test('calcularCostoEnvio: lanza error si tipo no existe', async () => {
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-    await expect(envioService.calcularCostoEnvio(999)).rejects.toThrow();
+    await expect(envioService.calcularCostoEnvio(999)).rejects.toThrow('Método de envío no disponible');
 });
 
 for (let i = 1; i <= 3; i++) {
