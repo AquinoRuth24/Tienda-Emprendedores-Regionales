@@ -76,68 +76,45 @@ for (let i = 1; i <= 3; i++) {
 
 for (let i = 1; i <= 3; i++) {
     test(`agregarProducto - intento ${i}: agrega producto al carrito existente`, async () => {
-      //obtenerCarritoActivo → carrito existe
     __mockQuery.mockResolvedValueOnce({ recordset: [{ id_carrito: 5 }] });
-      //verificar si item ya existe → no existe
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-      //insertar item
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-      //recalcularSubtotal
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
 
     const resultado = await carritoService.agregarProducto(1, 1, 2, 800);
-    expect(resultado).toHaveProperty('producto agregado con éxito');
+    expect(resultado.mensaje).toBe('producto agregado con éxito');
     });
 }
 
 test('agregarProducto: crea carrito nuevo si no existe', async () => {
-    // obtenerCarritoActivo → null
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-    // INSERT carrito nuevo + SCOPE_IDENTITY
     __mockQuery.mockResolvedValueOnce({ recordset: [{ id: 10 }] });
-    // verificar item → no existe
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-    // insertar item
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
-    // recalcularSubtotal
     __mockQuery.mockResolvedValueOnce({ recordset: [] });
 
     const resultado = await carritoService.agregarProducto(1, 2, 1, 1200);
-    expect(resultado).toHaveProperty('producto agregado con éxito');
+    expect(resultado.mensaje).toBe('producto agregado con éxito');
 });
 
 for (let i = 1; i <= 3; i++) {
     test(`eliminarItem - intento ${i}: elimina item correctamente`, async () => {
-      __mockQuery.mockResolvedValueOnce({ recordset: [] }); // DELETE
-      __mockQuery.mockResolvedValueOnce({ recordset: [] }); // recalcularSubtotal
+    __mockQuery.mockResolvedValueOnce({ recordset: [] });
+    __mockQuery.mockResolvedValueOnce({ recordset: [] });
     const resultado = await carritoService.eliminarItem(1, 5);
-    expect(resultado).toHaveProperty('Producto eliminado');
+    expect(resultado.mensaje).toBe('Producto eliminado');
     });
 }
 
 for (let i = 1; i <= 3; i++) {
-test(`actualizarCantidad - intento ${i}: actualiza cantidad correctamente`, async () => {
+    test(`actualizarCantidad - intento ${i}: actualiza cantidad correctamente`, async () => {
+    __mockQuery.mockResolvedValueOnce({ recordset: [{ stock: 20 }] });
+    __mockQuery.mockResolvedValueOnce({ recordset: [] });
+    __mockQuery.mockResolvedValueOnce({ recordset: [] });
 
-// consulta stock
-    __mockQuery.mockResolvedValueOnce({
-    recordset: [{ stock: 20 }]
+    const resultado = await carritoService.actualizarCantidad(1, 3, 5);
+    expect(resultado.mensaje).toBe('Cantidad actualizada correctamente');
     });
-
-// update item
-    __mockQuery.mockResolvedValueOnce({
-    recordset: []
-    });
-
-//recalcular subtotal
-    __mockQuery.mockResolvedValueOnce({
-    recordset: []
-    });
-
-    const resultado =
-    await carritoService.actualizarCantidad(1, 3, 5);
-
-    expect(resultado).toHaveProperty("Cantidad actualizada correctamente");
-});
 }
 
 });
