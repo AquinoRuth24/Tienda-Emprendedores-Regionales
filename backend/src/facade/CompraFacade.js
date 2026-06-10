@@ -1,4 +1,3 @@
-// src/facade/CompraFacade.js
 // Patrón de diseño: Facade (Estructural)
 // Librería del framework: express + express-async-errors
 // Propósito: proveer una interfaz simplificada al subsistema complejo
@@ -29,20 +28,9 @@ async finalizarCompra(id_carrito, id_cliente, datosEnvio) {
     await transaction.begin();
 
 //Validar que el carrito sigue activo
-    const req1 = new sql.Request(transaction);
-    const carritoResult = await req1
-        .input('id_carrito', sql.Int, id_carrito)
-        .query(`
-        SELECT id_carrito, total_carrito, id_estado_carrito
-        FROM Carrito
-        WHERE id_carrito = @id_carrito AND id_estado_carrito = 1
-        `);
-
-    if (!carritoResult.recordset[0]) {
-        throw new Error('Este carrito ya fue procesado o no existe');
-    }
-
-    const subtotal = carritoResult.recordset[0].total_carrito ?? 0;
+ //Validar que el carrito sigue activo
+    const carrito = await carritoService.validarEstadoCarrito(id_carrito, transaction);
+    const subtotal = carrito.total_carrito ?? 0;
 
 //Subsistema CarritoService: validar stock y descontarlo
     const items = await carritoService.validarStockProductos(id_carrito, transaction);

@@ -80,6 +80,23 @@ async obtenerPedidoPorId(id_pedido, id_cliente) {
     }
     return result.recordset[0];
 },
+
+async obtenerEstadoPedido(id_pedido) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input('id_pedido', sql.Int, id_pedido)
+    .query(`SELECT ep.descripcion AS estado_pedido
+            FROM Pedido p
+            INNER JOIN estado_pedido ep 
+              ON p.id_estado_pedido = ep.id_estado_pedido
+            WHERE p.id_pedido = @id_pedido`);
+  if (!result.recordset[0]) {
+    throw new Error('Pedido no encontrado');
+  }
+  return result.recordset[0].estado_pedido;
+},
+
 };
 
 module.exports = pedidoService;

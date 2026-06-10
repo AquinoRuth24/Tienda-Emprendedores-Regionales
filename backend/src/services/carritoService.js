@@ -345,6 +345,21 @@ const carritoService = {
     return result.recordset[0].id_pedido;
 },
 
+async validarEstadoCarrito(id_carrito) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input('id_carrito', sql.Int, id_carrito)
+    .query(`SELECT id_carrito, total_carrito 
+            FROM Carrito 
+            WHERE id_carrito = @id_carrito 
+            AND id_estado_carrito = 1`);
+  if (!result.recordset[0]) {
+    throw new Error('Este carrito ya fue procesado o no existe');
+  }
+  return result.recordset[0];
+},
+
 // finalizar compra y envío en una sola transacción
 /*async finalizarCompraConEnvio(id_carrito, id_cliente, datosEnvio) {
 //validar que se haya seleccionado un método de envío válido

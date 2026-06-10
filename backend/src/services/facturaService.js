@@ -59,6 +59,25 @@ async obtenerFacturasCliente(id_cliente) {
     };
 },
 
+
+async obtenerDetalles(id_factura) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input('id_factura', sql.Int, id_factura)
+    .query(`SELECT 
+              df.id_detalle_factura,
+              df.cantidad,
+              df.precio_unitario,
+              df.subtotal,
+              p.nombre AS nombre_producto
+            FROM Detalle_factura df
+            INNER JOIN Producto p 
+              ON df.id_producto = p.id_producto
+            WHERE df.id_factura = @id_factura`);
+  return result.recordset;
+},
+
 };
 
 module.exports = facturaService;
