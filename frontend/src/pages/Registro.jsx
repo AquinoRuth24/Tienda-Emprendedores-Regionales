@@ -5,7 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 //maneja el registro del cliente,valida los campos manda al backend y redirige a login
 function Registro() {
   const [form, setForm] = useState({
-    apellidoNombre: "",
+    nombre: "",
+    apellido: "",
     email: "",
     contraseña: "",
     confirmar: "",
@@ -49,7 +50,8 @@ function Registro() {
 
     try {
       await axios.post("http://localhost:3001/api/cliente/registrar", {
-        apellidoNombre: form.apellidoNombre,
+        nombre: form.nombre,
+        apellido: form.apellido,
         email: form.email,
         contraseña: form.contraseña,
         DNI: parseInt(form.DNI),
@@ -89,17 +91,33 @@ function Registro() {
           {exito && <p style={estilos.exito}>{exito}</p>}
 
           <form onSubmit={handleSubmit} style={estilos.form}>
-            <div style={estilos.campo}>
-              <label style={estilos.label}>Apellido y Nombre</label>
-              <input
-                type="text"
-                name="apellidoNombre"
-                placeholder="Pérez Juan"
-                value={form.apellidoNombre}
-                onChange={handleChange}
-                style={estilos.input}
-                required
-              />
+            {/* NUEVA FILA: Nombre y Apellido separados */}
+            <div style={estilos.fila}>
+              <div style={estilos.campo}>
+                <label style={estilos.label}>Nombre</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Juan Cruz"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  style={estilos.input}
+                  required
+                />
+              </div>
+              
+              <div style={estilos.campo}>
+                <label style={estilos.label}>Apellido</label>
+                <input
+                  type="text"
+                  name="apellido"
+                  placeholder="Pérez"
+                  value={form.apellido}
+                  onChange={handleChange}
+                  style={estilos.input}
+                  required
+                />
+              </div>
             </div>
 
             <div style={estilos.fila}>
@@ -136,7 +154,7 @@ function Registro() {
               </div>
             </div>
               
-              <div style={estilos.fila}>
+            <div style={estilos.fila}>
               <div style={estilos.campo}>
                 <label style={estilos.label}>Fecha de Nacimiento</label>
                 <input

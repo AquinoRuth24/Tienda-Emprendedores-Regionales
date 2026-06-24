@@ -3,7 +3,8 @@ const clienteService = require("../services/clienteService");
 //registrar cliente
 const registrar = async (req, res) => {
   const {
-    apellidoNombre,
+    nombre,
+    apellido,
     email,
     contraseña,
     DNI,
@@ -25,7 +26,8 @@ const registrar = async (req, res) => {
 
     //guardar cliente
     await clienteService.guardarCliente(
-      apellidoNombre,
+      nombre,
+      apellido,
       email,
       hash,
       DNI,
@@ -67,9 +69,10 @@ const login = async (req, res) => {
     res.json({
       token,
       cliente: {
-        id:     cliente.id_cliente,
-        nombre: cliente.apellidoNombre,
-        email: cliente.email,
+        id:       cliente.id_cliente,
+        nombre:   cliente.nombre,
+        apellido: cliente.apellido,
+        email:    cliente.email,
       },
     });
   } catch (err) {
